@@ -8,7 +8,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="V-Taper Log" />
 <meta name="theme-color" content="#14161A" />
-<link rel="manifest" href='data:application/json,{"name":"V-Taper Log","short_name":"V-Taper","start_url":".","display":"standalone","background_color":"%2314161A","theme_color":"%2314161A","icons":[]}' />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 * { box-sizing: border-box; }
@@ -215,32 +218,169 @@ function MiniLineChart({ data }) {
   );
 }
 
+// Background-safe rest alarm. Scheduling the chime on the Web Audio hardware
+// clock (instead of a setTimeout/setInterval) means it still fires when the
+// phone is locked or the tab is backgrounded — where JS timers get throttled.
+// A near-silent looping buffer keeps the audio session alive so the OS doesn't
+// suspend the context.
+const RestAudio = (() => {
+  let ctx = null;
+  let keepAliveSrc = null;
+  let keepAliveCount = 0;
+
+  function ensureCtx() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    if (!ctx) ctx = new AC();
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+
+  function acquireKeepAlive() {
+    if (!ensureCtx()) return;
+    keepAliveCount++;
+    if (keepAliveSrc) return;
+    const buffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    const src = ctx.createBufferSource();
+    src.buffer = buffer; src.loop = true;
+    const g = ctx.createGain(); g.gain.value = 0.0001;
+    src.connect(g).connect(ctx.destination);
+    src.start();
+    keepAliveSrc = src;
+  }
+
+  function releaseKeepAlive() {
+    keepAliveCount = Math.max(0, keepAliveCount - 1);
+    if (keepAliveCount === 0 && keepAliveSrc) {
+      try { keepAliveSrc.stop(); } catch (e) {}
+      keepAliveSrc = null;
+    }
+  }
+
+  function chimeAt(t0) {
+    const notes = [[880, 0], [1175, 0.18], [1568, 0.36]]; // A5 → D6 → G6
+    return notes.map(([freq, off]) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = "sine"; osc.frequency.value = freq;
+      const s = t0 + off;
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.exponentialRampToValueAtTime(0.6, s + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0008, s + 0.4);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(s); osc.stop(s + 0.45);
+      return osc;
+    });
+  }
+
+  // Short blip on start: confirms the tap AND unlocks audio inside the gesture
+  // (required on iOS before any scheduled sound will play).
+  function blip() {
+    if (!ensureCtx()) return;
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = "sine"; osc.frequency.value = 660;
+    const s = ctx.currentTime;
+    g.gain.setValueAtTime(0.0001, s);
+    g.gain.exponentialRampToValueAtTime(0.25, s + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0008, s + 0.12);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(s); osc.stop(s + 0.15);
+  }
+
+  // Schedule the alarm `seconds` from now. Returns a cancel() fn.
+  function start(seconds) {
+    if (!ensureCtx()) return () => {};
+    acquireKeepAlive();
+    const oscs = chimeAt(ctx.currentTime + Math.max(0, seconds));
+    let released = false;
+    return () => {
+      if (released) return; released = true;
+      oscs.forEach((o) => { try { o.stop(); } catch (e) {} });
+      releaseKeepAlive();
+    };
+  }
+
+  return { start, blip };
+})();
+
 function RestTimer({ seconds, label }) {
   const [remaining, setRemaining] = useState(seconds);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
   const intervalRef = useRef(null);
+  const endTimeRef = useRef(null);
+  const cancelAudioRef = useRef(null);
 
-  useEffect(() => {
-    if (running) {
-      intervalRef.current = setInterval(() => {
-        setRemaining((r) => {
-          if (r <= 1) { clearInterval(intervalRef.current); setRunning(false); setDone(true);
-            try { navigator.vibrate && navigator.vibrate(200); } catch (e) {}
-            return 0; }
-          return r - 1;
-        });
-      }, 1000);
+  const clearAudio = () => {
+    if (cancelAudioRef.current) { cancelAudioRef.current(); cancelAudioRef.current = null; }
+  };
+
+  const finish = () => {
+    clearInterval(intervalRef.current);
+    setRemaining(0); setRunning(false); setDone(true);
+    // Audio alarm was already scheduled and fires on its own (even when locked).
+    // Vibrate + notification are best-effort extras for when the app is visible.
+    try { navigator.vibrate && navigator.vibrate([300, 120, 300]); } catch (e) {}
+    const title = "Rest over 💪", body = "Time for your next set.";
+    try {
+      if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+        // Shown via the SW registration — displays reliably even when backgrounded on Android.
+        navigator.serviceWorker.controller.postMessage({ type: "notify", title, body });
+      } else if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, { body, tag: "rest-timer" });
+      }
+    } catch (e) {}
+  };
+
+  // Derive remaining from the target timestamp so the display self-corrects
+  // after the tab was backgrounded (where setInterval doesn't tick reliably).
+  const tick = () => {
+    const left = Math.round((endTimeRef.current - Date.now()) / 1000);
+    if (left <= 0) finish(); else setRemaining(left);
+  };
+
+  const start = () => {
+    setDone(false);
+    endTimeRef.current = Date.now() + remaining * 1000;
+    RestAudio.blip();
+    cancelAudioRef.current = RestAudio.start(remaining);
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
     }
-    return () => clearInterval(intervalRef.current);
+    setRunning(true);
+    clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(tick, 500);
+  };
+
+  const pause = () => {
+    clearInterval(intervalRef.current);
+    clearAudio();
+    if (endTimeRef.current) setRemaining(Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000)));
+    setRunning(false);
+  };
+
+  const reset = () => {
+    clearInterval(intervalRef.current);
+    clearAudio();
+    endTimeRef.current = null;
+    setRemaining(seconds); setRunning(false); setDone(false);
+  };
+
+  // Re-sync the instant the tab regains focus (mobile throttles background timers).
+  useEffect(() => {
+    const onVis = () => { if (!document.hidden && running) tick(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
   }, [running]);
 
-  const reset = () => { clearInterval(intervalRef.current); setRemaining(seconds); setRunning(false); setDone(false); };
+  useEffect(() => () => { clearInterval(intervalRef.current); clearAudio(); }, []);
+
+  const handleClick = () => { if (done) reset(); else if (running) pause(); else start(); };
   const mm = Math.floor(remaining / 60), ss = remaining % 60;
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <button onClick={() => (done ? reset() : setRunning((r) => !r))} className="tracker-timer-btn"
+      <button onClick={handleClick} className="tracker-timer-btn"
+        title="Rest timer — chimes even when your phone is locked"
         style={{ background: done ? "var(--accent-green)" : running ? "var(--accent-brass)" : "transparent" }}>
         <E size={13}>⏱</E>
         <span style={{ fontFamily: "var(--font-mono)" }}>{done ? "Done" : `${mm}:${ss.toString().padStart(2, "0")}`}</span>
@@ -753,6 +893,15 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+<script>
+// Register the service worker so the app installs to the home screen, works
+// offline, and can show the rest-over notification from the background.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch((e) => console.warn("SW registration failed:", e));
+  });
+}
 </script>
 </body>
 </html>
