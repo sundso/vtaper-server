@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 
 const { login, requireAuth } = require("./auth");
-const dataRoutes = require("./routes/data");
+const apiRoutes = require("./routes");
 
 const app = express();
 
@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
 app.post("/api/auth/login", login);
 
 // Every route below this line requires a valid token
-app.use("/api", requireAuth, dataRoutes);
+app.use("/api", requireAuth, apiRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
