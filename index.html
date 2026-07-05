@@ -5,41 +5,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>V-Taper Log</title>
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="V-Taper Log" />
-<meta name="theme-color" content="#14161A" />
+<meta name="theme-color" content="#0058a3" />
 <meta name="mobile-web-app-capable" content="yes" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png" />
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&family=Noto+Sans+Mono:wght@400;500;600&display=swap');
 * { box-sizing: border-box; }
-body { margin: 0; background: #0B0C0E; }
+body { margin: 0; background: #ebecee; }
 .tracker-root {
-  --bg: #14161A; --panel: #1D2025; --panel-2: #23262C; --panel-3: #34383F;
-  --text: #E8E6E1; --text-muted: #8B8F96;
-  --accent-brass: #C9A227; --accent-green: #4A7C59; --accent-rust: #A85A3A;
-  --font-display: 'Oswald', sans-serif; --font-body: 'Inter', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  /* IKEA-inspired: white surfaces on a light canvas, blue + yellow accents */
+  --bg: #f5f5f5; --panel: #ffffff; --panel-2: #f2f2f3; --panel-3: #dedede;
+  --text: #111111; --text-muted: #6b6b6b;
+  --accent-brass: #0058a3; --accent-green: #0a8a00; --accent-rust: #cc0008; --accent-yellow: #ffdb00;
+  --font-display: 'Noto Sans', sans-serif; --font-body: 'Noto Sans', sans-serif; --font-mono: 'Noto Sans Mono', monospace;
   background: var(--bg); color: var(--text); font-family: var(--font-body);
   min-height: 100vh; max-width: 480px; margin: 0 auto; overflow-x: hidden;
 }
 .tracker-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .tracker-emoji { line-height: 1; display: inline-block; }
 .tracker-onboard { text-align: center; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.tracker-onboard-title { font-family: var(--font-display); font-size: 26px; letter-spacing: 0.5px; margin: 4px 0 0; }
+.tracker-onboard-title { font-family: var(--font-display); font-weight: 800; font-size: 26px; letter-spacing: -0.3px; margin: 4px 0 0; }
 .tracker-onboard-sub { color: var(--text-muted); font-size: 13px; line-height: 1.5; max-width: 300px; }
 .tracker-onboard-hint { color: var(--text-muted); font-size: 11px; line-height: 1.5; max-width: 280px; margin-top: 4px; }
-.tracker-login-error { color: #E8918A; font-size: 12px; margin: 0; }
+.tracker-login-error { color: var(--accent-rust); font-size: 12px; margin: 0; }
 .tracker-primary-btn {
-  background: var(--accent-brass); color: #1A1A1A; font-weight: 600; border: none;
-  padding: 12px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 8px;
+  background: var(--accent-brass); color: #fff; font-weight: 700; border: none;
+  padding: 13px 20px; border-radius: 24px; font-size: 14px; cursor: pointer; margin-top: 8px;
   display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
   font-family: var(--font-body);
 }
-.tracker-header { background: var(--panel); padding: 18px 18px 0; position: sticky; top: 0; z-index: 5; }
+.tracker-header { background: var(--panel); padding: 18px 18px 0; position: sticky; top: 0; z-index: 5; border-bottom: 3px solid var(--accent-yellow); }
 .tracker-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.tracker-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 17px; letter-spacing: 0.5px; }
+.tracker-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: -0.2px; color: var(--accent-brass); }
 .tracker-icon-btn {
   background: var(--panel-2); border: none; color: var(--text-muted); width: 30px; height: 30px;
   border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px;
@@ -51,7 +52,7 @@ body { margin: 0; background: #0B0C0E; }
 .tracker-loader-caption { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 6px; }
 .tracker-phase-banner { background: var(--panel-2); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; border-left: 3px solid var(--accent-brass); }
 .tracker-phase-banner.is-deload { border-left-color: var(--accent-rust); }
-.tracker-phase-name { font-family: var(--font-display); font-size: 16px; }
+.tracker-phase-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; }
 .tracker-phase-desc { font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.4; }
 .tracker-phase-rpe { font-family: var(--font-mono); font-size: 11px; color: var(--accent-brass); margin-top: 6px; }
 .tracker-tabs { display: flex; gap: 4px; }
@@ -60,8 +61,8 @@ body { margin: 0; background: #0B0C0E; }
 .tracker-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
 .tracker-day-select { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
 .tracker-day-btn { background: var(--panel-2); border: 1px solid var(--panel-3); color: var(--text-muted); padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; font-family: var(--font-body); }
-.tracker-day-btn.active { background: var(--accent-brass); color: #1A1A1A; border-color: var(--accent-brass); font-weight: 600; }
-.tracker-card { background: var(--panel); border-radius: 10px; overflow: hidden; border: 1px solid var(--panel-3); }
+.tracker-day-btn.active { background: var(--accent-brass); color: #fff; border-color: var(--accent-brass); font-weight: 600; }
+.tracker-card { background: var(--panel); border-radius: 12px; overflow: hidden; border: 1px solid var(--panel-3); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 .tracker-card-head { width: 100%; background: transparent; border: none; color: var(--text); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-align: left; }
 .tracker-card-titlewrap { display: flex; flex-direction: column; gap: 2px; }
 .tracker-card-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
@@ -381,7 +382,8 @@ function RestTimer({ seconds, label }) {
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
       <button onClick={handleClick} className="tracker-timer-btn"
         title="Rest timer — chimes even when your phone is locked"
-        style={{ background: done ? "var(--accent-green)" : running ? "var(--accent-brass)" : "transparent" }}>
+        style={{ background: done ? "var(--accent-green)" : running ? "var(--accent-brass)" : "transparent",
+                 color: (done || running) ? "#fff" : "var(--text)", borderColor: (done || running) ? "transparent" : "var(--panel-3)" }}>
         <E size={13}>⏱</E>
         <span style={{ fontFamily: "var(--font-mono)" }}>{done ? "Done" : `${mm}:${ss.toString().padStart(2, "0")}`}</span>
       </button>
