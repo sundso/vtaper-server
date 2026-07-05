@@ -4,17 +4,19 @@ The app is skinned entirely through **CSS custom properties (design tokens)** de
 `.tracker-root` in `index.html`. Every surface reads from tokens, so switching the
 `data-theme` attribute on the root reskins the whole app — no per-component rewrites.
 
-There are currently **two themes**: `sundso` (default) and `8bit`. Adding more is a
-copy-paste of one token block (see [Adding a theme](#adding-a-theme)).
+There are currently **three themes**: `sundso` (default), `8bit`, and `dark`. Adding more
+is a copy-paste of one token block (see [Adding a theme](#adding-a-theme)).
 
 ```
 .tracker-root                     ← token contract + defaults (= "sundso" theme)
 .tracker-root[data-theme="8bit"]  ← override block for the 8-bit theme
+.tracker-root[data-theme="dark"]  ← override block for dark mode (color only)
 ```
 
 The active theme lives in React state (`theme`), is persisted to
 `localStorage["vtaper_theme"]`, and is applied as `data-theme={theme}` on every
-`.tracker-root`. The 🎮 / 🛋 button in the header toggles it (`cycleTheme`).
+`.tracker-root`. The header button cycles through `THEMES` (`cycleTheme`) and shows the
+current theme's icon (🛋 / 🎮 / 🌙).
 
 ---
 
@@ -88,6 +90,20 @@ hard "pixel" offset shadows, uppercase titles, tactile press effect on buttons.
 | border-w | `2px` |
 | shadow-card / btn-shadow | `3px 3px 0 var(--text)` |
 | titles | `uppercase` |
+
+## Theme: `dark`
+
+Same IKEA shape/type language as `sundso`, inverted palette. Demonstrates a **color-only**
+theme — it overrides just the color tokens and `--shadow-card`, inheriting every shape and
+font default from the contract.
+
+| Token | Value |
+|---|---|
+| bg / panel / panel-2 / panel-3 | `#0f1115` / `#1a1d23` / `#242832` / `#363b47` |
+| text / text-muted | `#e8eaed` / `#9aa0ac` |
+| brass / green / rust / yellow | `#4a9eff` / `#3ecf8e` / `#ff5c5c` / `#ffd34e` |
+| fonts / shape | inherited from contract (Noto Sans, rounded) |
+| shadow-card | `0 1px 3px rgba(0,0,0,0.4)` |
 
 > **Font note:** the reference "Pixel Gamer" font is a paid Ditatype font. These are the
 > closest free Google Fonts. Press Start 2P is tall/wide, so the 8-bit block shrinks the

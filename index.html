@@ -69,6 +69,18 @@ body { margin: 0; background: #ebecee; }
 .tracker-root[data-theme="8bit"] .tracker-primary-btn:active,
 .tracker-root[data-theme="8bit"] .tracker-day-btn:active,
 .tracker-root[data-theme="8bit"] .tracker-preset-chip:active { transform: var(--btn-press); box-shadow: none; }
+
+/* ============================================================
+   THEME: "dark" — same IKEA shape language, inverted palette.
+   Demonstrates that a theme can restyle color only, reusing
+   every shape/type default from the contract.
+   ============================================================ */
+.tracker-root[data-theme="dark"] {
+  --bg: #0f1115; --panel: #1a1d23; --panel-2: #242832; --panel-3: #363b47;
+  --text: #e8eaed; --text-muted: #9aa0ac;
+  --accent-brass: #4a9eff; --accent-green: #3ecf8e; --accent-rust: #ff5c5c; --accent-yellow: #ffd34e;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.4);
+}
 .tracker-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .tracker-emoji { line-height: 1; display: inline-block; }
 .tracker-onboard { text-align: center; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
@@ -552,7 +564,9 @@ function App() {
   const [theme, setTheme] = useState(() => loadJSON("vtaper_theme", "sundso"));
 
   useEffect(() => { saveJSON("vtaper_theme", theme); }, [theme]);
-  const cycleTheme = () => setTheme((t) => (t === "8bit" ? "sundso" : "8bit"));
+  const THEMES = ["sundso", "8bit", "dark"];
+  const THEME_ICON = { sundso: "🛋", "8bit": "🎮", dark: "🌙" };
+  const cycleTheme = () => setTheme((t) => THEMES[(THEMES.indexOf(t) + 1) % THEMES.length]);
 
   const loadAppData = async (tok) => {
     setWakingServer(true);
@@ -799,7 +813,7 @@ function App() {
         <div className="tracker-header-top">
           <div className="tracker-brand"><E size={18}>🏋</E><span>V-Taper Log</span></div>
           <div style={{ display: "flex", gap: 6 }}>
-            <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={cycleTheme} title={theme === "8bit" ? "Switch to Sundsö theme" : "Switch to 8-bit theme"}><E size={19}>{theme === "8bit" ? "🛋" : "🎮"}</E></button>
+            <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={cycleTheme} title={`Theme: ${theme} — tap to switch`}><E size={19}>{THEME_ICON[theme] || "🎮"}</E></button>
             <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={exportData} title="Export backup"><E size={19}>⬇</E></button>
             <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={() => setConfirmingReset(true)} title="Reset all data"><E size={19}>↺</E></button>
             <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={() => setConfirmingLogout(true)} title="Log out"><E size={19}>⏻</E></button>
