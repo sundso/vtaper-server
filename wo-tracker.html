@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>V-Taper Log</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="V-Taper Log" />
+<meta name="theme-color" content="#14161A" />
+<link rel="manifest" href='data:application/json,{"name":"V-Taper Log","short_name":"V-Taper","start_url":".","display":"standalone","background_color":"%2314161A","theme_color":"%2314161A","icons":[]}' />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+* { box-sizing: border-box; }
+body { margin: 0; background: #0B0C0E; }
+.tracker-root {
+  --bg: #14161A; --panel: #1D2025; --panel-2: #23262C; --panel-3: #34383F;
+  --text: #E8E6E1; --text-muted: #8B8F96;
+  --accent-brass: #C9A227; --accent-green: #4A7C59; --accent-rust: #A85A3A;
+  --font-display: 'Oswald', sans-serif; --font-body: 'Inter', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  background: var(--bg); color: var(--text); font-family: var(--font-body);
+  min-height: 100vh; max-width: 480px; margin: 0 auto; overflow-x: hidden;
+}
+.tracker-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+.tracker-emoji { line-height: 1; display: inline-block; }
+.tracker-onboard { text-align: center; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.tracker-onboard-title { font-family: var(--font-display); font-size: 26px; letter-spacing: 0.5px; margin: 4px 0 0; }
+.tracker-onboard-sub { color: var(--text-muted); font-size: 13px; line-height: 1.5; max-width: 300px; }
+.tracker-primary-btn {
+  background: var(--accent-brass); color: #1A1A1A; font-weight: 600; border: none;
+  padding: 12px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+  font-family: var(--font-body);
+}
+.tracker-header { background: var(--panel); padding: 18px 18px 0; position: sticky; top: 0; z-index: 5; }
+.tracker-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.tracker-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 17px; letter-spacing: 0.5px; }
+.tracker-icon-btn {
+  background: var(--panel-2); border: none; color: var(--text-muted); width: 30px; height: 30px;
+  border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px;
+}
+.tracker-loader-wrap { margin-bottom: 14px; }
+.tracker-bar { display: flex; align-items: flex-end; gap: 2px; height: 24px; }
+.tracker-plate { flex: 1; border-radius: 2px 2px 0 0; }
+.tracker-loader-caption { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+.tracker-phase-banner { background: var(--panel-2); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; border-left: 3px solid var(--accent-brass); }
+.tracker-phase-banner.is-deload { border-left-color: var(--accent-rust); }
+.tracker-phase-name { font-family: var(--font-display); font-size: 16px; }
+.tracker-phase-desc { font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.4; }
+.tracker-phase-rpe { font-family: var(--font-mono); font-size: 11px; color: var(--accent-brass); margin-top: 6px; }
+.tracker-tabs { display: flex; gap: 4px; }
+.tracker-tab { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 10px 0; font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; font-family: var(--font-body); }
+.tracker-tab.active { color: var(--text); border-bottom-color: var(--accent-brass); }
+.tracker-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
+.tracker-day-select { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.tracker-day-btn { background: var(--panel-2); border: 1px solid var(--panel-3); color: var(--text-muted); padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; font-family: var(--font-body); }
+.tracker-day-btn.active { background: var(--accent-brass); color: #1A1A1A; border-color: var(--accent-brass); font-weight: 600; }
+.tracker-card { background: var(--panel); border-radius: 10px; overflow: hidden; border: 1px solid var(--panel-3); }
+.tracker-card-head { width: 100%; background: transparent; border: none; color: var(--text); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-align: left; }
+.tracker-card-titlewrap { display: flex; flex-direction: column; gap: 2px; }
+.tracker-card-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.tracker-card-sub { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tracker-badge { background: var(--accent-rust); color: #fff; font-size: 9px; padding: 1px 6px; border-radius: 10px; }
+.tracker-badge-ramp { background: var(--panel-3); color: var(--text-muted); }
+.tracker-card-body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.tracker-alt-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+.tracker-alt-row strong { color: var(--text); font-weight: 600; }
+.tracker-ramp-wrap { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; }
+.tracker-ramp-toggle { background: transparent; border: none; color: var(--accent-rust); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer; width: 100%; padding: 0; font-family: var(--font-body); }
+.tracker-ramp-body { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.tracker-ramp-step { display: flex; justify-content: space-between; font-size: 12px; }
+.tracker-ramp-note { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin: 4px 0 0; }
+.tracker-warmup-card { border-color: var(--accent-rust); }
+.tracker-warmup-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.tracker-timer-btn { border: 1px solid var(--panel-3); background: transparent; color: var(--text); padding: 5px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+.tracker-rest-label { font-size: 11px; color: var(--text-muted); }
+.tracker-lastsession { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+.tracker-set-rows { display: flex; flex-direction: column; gap: 6px; }
+.tracker-set-row { display: grid; grid-template-columns: 28px 1fr 1fr; gap: 8px; align-items: center; }
+.tracker-set-row-head { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.tracker-set-num { font-family: var(--font-mono); color: var(--accent-brass); font-size: 13px; }
+.tracker-input { background: var(--panel-2); border: 1px solid var(--panel-3); color: var(--text); padding: 7px 8px; border-radius: 6px; font-size: 13px; font-family: var(--font-mono); width: 100%; }
+.tracker-input:focus { outline: none; border-color: var(--accent-brass); }
+.tracker-save-btn { position: sticky; bottom: 12px; }
+.tracker-pump-note { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.tracker-pump-row { display: grid; grid-template-columns: 2fr 1fr 1fr 28px; gap: 6px; align-items: center; }
+.tracker-add-row { background: transparent; border: 1px dashed var(--panel-3); color: var(--text-muted); padding: 8px; border-radius: 6px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
+.tracker-preset-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.tracker-preset-chip { background: var(--panel-2); border: 1px solid var(--panel-3); color: var(--text-muted); padding: 5px 10px; border-radius: 20px; font-size: 11px; cursor: pointer; font-family: var(--font-body); }
+.tracker-trend-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.tracker-select { background: var(--panel-2); border: 1px solid var(--panel-3); color: var(--text); padding: 6px 8px; border-radius: 6px; font-size: 12px; flex: 1; font-family: var(--font-body); }
+.tracker-empty-note { font-size: 12px; color: var(--text-muted); text-align: center; padding: 12px 0; }
+.tracker-history-row { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid var(--panel-3); }
+.tracker-history-row:last-child { border-bottom: none; }
+.tracker-mono { font-family: var(--font-mono); color: var(--text-muted); }
+.tracker-confirm-panel { background: var(--panel-2); border: 1px solid var(--accent-rust); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
+.tracker-confirm-text { font-size: 12px; color: var(--text); line-height: 1.5; margin: 0 0 10px; }
+.tracker-confirm-actions { display: flex; gap: 8px; }
+.tracker-confirm-cancel { flex: 1; background: var(--panel-3); border: none; color: var(--text); padding: 9px 0; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-body); }
+.tracker-confirm-danger { flex: 1; background: var(--accent-rust); border: none; color: #fff; padding: 9px 0; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-body); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo } = React;
+
+const E = ({ children, size }) => <span className="tracker-emoji" style={{ fontSize: size || 16 }}>{children}</span>;
+
+const PROGRAM = {
+  "Upper A": [
+    { id: "ua1", name: "Incline Machine Press", target: "Upper chest", sets: 3, reps: "10-15", rest: 105, restLabel: "90-120s", rpe: "7-8", priority: true, alt: "Incline DB press" },
+    { id: "ua2", name: "Cable Lateral Raise", target: "Side delts", sets: 4, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "8", priority: true, alt: "DB lateral raise / machine lateral raise" },
+    { id: "ua3", name: "Low-to-High Cable Fly", target: "Upper chest", sets: 3, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: true, alt: "Incline pec-deck" },
+    { id: "ua4", name: "Lat Pulldown", target: "Lats", sets: 4, reps: "10-15", rest: 105, restLabel: "90-120s", rpe: "7-8", priority: true, alt: "Assisted pull-up / straight-arm pulldown" },
+    { id: "ua5", name: "Chest-Supported Row", target: "Upper back", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Seated cable row / machine row" },
+    { id: "ua6", name: "Rear Delt Fly / Face Pull", target: "Rear delts", sets: 3, reps: "15-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Reverse pec-deck" },
+    { id: "ua7", name: "Biceps Curl", target: "Biceps", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: "Any curl variation" },
+    { id: "ua8", name: "Triceps Pressdown", target: "Triceps", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: "Overhead cable extension" },
+  ],
+  "Lower A": [
+    { id: "la1", name: "Leg Press", target: "Quads", sets: 3, reps: "10-15", rest: 105, restLabel: "90-120s", rpe: "7-8", priority: false, alt: "Hack squat machine" },
+    { id: "la2", name: "Seated Leg Curl", target: "Hamstrings", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Lying leg curl" },
+    { id: "la3", name: "Leg Extension", target: "Quads", sets: 3, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: false, alt: null },
+    { id: "la4", name: "Hip Thrust (machine/DB)", target: "Glutes", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Cable pull-through" },
+    { id: "la5", name: "Calf Raise (standing)", target: "Calves", sets: 3, reps: "12-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Seated calf raise" },
+    { id: "la6", name: "Abs (optional)", target: "Core", sets: 3, reps: "15", rest: 53, restLabel: "45-60s", rpe: "-", priority: false, optional: true, alt: "Any ab exercise" },
+  ],
+  "Upper B": [
+    { id: "ub1", name: "Incline DB Press", target: "Upper chest", sets: 3, reps: "10-15", rest: 105, restLabel: "90-120s", rpe: "7-8", priority: true, alt: "Incline machine press" },
+    { id: "ub2", name: "DB Lateral Raise", target: "Side delts", sets: 4, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "8", priority: true, alt: "Cable or machine lateral raise" },
+    { id: "ub3", name: "Incline Smith / 2nd Angle Press", target: "Upper chest", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: true, alt: "Low-to-high cable fly" },
+    { id: "ub4", name: "Pull-Up / Assisted Pull-Up", target: "Lats", sets: 3, reps: "8-12", rest: 105, restLabel: "90-120s", rpe: "7-8", priority: true, alt: "Lat pulldown, different grip than Upper A" },
+    { id: "ub5", name: "Single-Arm DB Row", target: "Upper back", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Chest-supported row, different angle" },
+    { id: "ub6", name: "Face Pull", target: "Rear delts", sets: 3, reps: "15-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Rear delt fly" },
+    { id: "ub7", name: "Biceps Curl (variation)", target: "Biceps", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: null },
+    { id: "ub8", name: "Triceps (overhead variation)", target: "Triceps", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: null },
+  ],
+  "Lower B": [
+    { id: "lb1", name: "Hack Squat Machine", target: "Quads", sets: 3, reps: "10-15", rest: 105, restLabel: "90-120s", rpe: "7-8", priority: false, alt: "Leg press, different foot placement than Lower A" },
+    { id: "lb2", name: "Lying Leg Curl", target: "Hamstrings", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Seated leg curl" },
+    { id: "lb3", name: "DB Romanian Deadlift", target: "Hamstrings/glutes", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7", priority: false, alt: "Glute kickback machine / cable pull-through (zero hinge option)" },
+    { id: "lb4", name: "Leg Extension", target: "Quads", sets: 2, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: false, alt: null },
+    { id: "lb5", name: "Calf Raise (seated)", target: "Calves", sets: 3, reps: "12-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Standing calf raise" },
+    { id: "lb6", name: "Adductor/Abductor Machine", target: "Adductors", sets: 2, reps: "15", rest: 53, restLabel: "45-60s", rpe: "6-7", priority: false, optional: true, alt: null },
+  ],
+};
+
+const DAY_ORDER = ["Upper A", "Lower A", "Upper B", "Lower B"];
+const PUMP_PRESETS = ["Band Pull-Aparts", "Light Face Pulls", "Light Cable Lateral Raise", "Light Lat Pulldown", "Easy Incline Walk"];
+
+function getPhaseInfo(week) {
+  if (week <= 4) return { name: "Foundation", rpe: "6-7", desc: "Learn the exercises, groove technique. Don't chase weight yet.", deload: false };
+  if (week <= 8) return { name: "Progressive Overload", rpe: "7-8", desc: "Add reps, then weight — beat last session on something.", deload: false };
+  if (week === 9) return { name: "Deload", rpe: "5-6", desc: "Cut volume ~50%. Let joints and CNS recover.", deload: true };
+  if (week <= 14) return { name: "Volume Phase", rpe: "7-8", desc: "Add 1 set to each priority (★) exercise.", deload: false };
+  if (week <= 18) return { name: "Intensification", rpe: "8-9 last set", desc: "Push the last set of priority lifts harder. Keep 1-2 RIR elsewhere.", deload: false };
+  if (week === 19) return { name: "Deload", rpe: "5-6", desc: "Cut volume ~50%. Recovery week.", deload: true };
+  if (week <= 24) return { name: "Consolidation", rpe: "7-8", desc: "Reassess: compare photos + strength logs to week 1.", deload: false };
+  return { name: "Repeat Cycle", rpe: "7-8", desc: "Restart at Progressive-Overload intensity. Rotate a stale exercise if needed.", deload: false };
+}
+
+function fmtDate(d) { return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); }
+const stripNegative = (v) => v.replace(/-/g, "");
+const loadJSON = (key, fallback) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } };
+const saveJSON = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; } };
+
+function MiniLineChart({ data }) {
+  if (data.length < 2) return <p className="tracker-empty-note">Log this exercise at least twice to see a trend.</p>;
+  const w = 300, h = 150, pad = 26;
+  const weights = data.map((d) => d.weight);
+  const max = Math.max(...weights), min = Math.min(...weights);
+  const range = max - min || 1;
+  const stepX = (w - pad * 2) / (data.length - 1);
+  const points = data.map((d, i) => [pad + i * stepX, h - pad - ((d.weight - min) / range) * (h - pad * 2)]);
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: "100%", height: 160 }}>
+      <polyline points={points.map((p) => p.join(",")).join(" ")} fill="none" stroke="var(--accent-brass)" strokeWidth="2" />
+      {points.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="3" fill="var(--accent-brass)" />)}
+      <text x={pad} y={h - 6} fontSize="10" fill="var(--text-muted)">{data[0].date}</text>
+      <text x={w - pad} y={h - 6} fontSize="10" fill="var(--text-muted)" textAnchor="end">{data[data.length - 1].date}</text>
+    </svg>
+  );
+}
+
+function RestTimer({ seconds, label }) {
+  const [remaining, setRemaining] = useState(seconds);
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (running) {
+      intervalRef.current = setInterval(() => {
+        setRemaining((r) => {
+          if (r <= 1) { clearInterval(intervalRef.current); setRunning(false); setDone(true);
+            try { navigator.vibrate && navigator.vibrate(200); } catch (e) {}
+            return 0; }
+          return r - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [running]);
+
+  const reset = () => { clearInterval(intervalRef.current); setRemaining(seconds); setRunning(false); setDone(false); };
+  const mm = Math.floor(remaining / 60), ss = remaining % 60;
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <button onClick={() => (done ? reset() : setRunning((r) => !r))} className="tracker-timer-btn"
+        style={{ background: done ? "var(--accent-green)" : running ? "var(--accent-brass)" : "transparent" }}>
+        <E size={13}>⏱</E>
+        <span style={{ fontFamily: "var(--font-mono)" }}>{done ? "Done" : `${mm}:${ss.toString().padStart(2, "0")}`}</span>
+      </button>
+      {(running || remaining !== seconds) && !done && (
+        <button onClick={reset} className="tracker-icon-btn" title="Reset timer"><E size={12}>↺</E></button>
+      )}
+      <span className="tracker-rest-label">rest {label}</span>
+    </div>
+  );
+}
+
+function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst }) {
+  const [open, setOpen] = useState(true);
+  const [showRamp, setShowRamp] = useState(false);
+  const extraSet = phase.name === "Volume Phase" && exercise.priority;
+  const totalSets = extraSet ? exercise.sets + 1 : exercise.sets;
+
+  return (
+    <div className="tracker-card">
+      <button className="tracker-card-head" onClick={() => setOpen((o) => !o)}>
+        <div className="tracker-card-titlewrap">
+          <div className="tracker-card-title">
+            {exercise.priority && <E size={13}><span style={{ color: "var(--accent-brass)" }}>★</span></E>}
+            {exercise.name}
+          </div>
+          <div className="tracker-card-sub">
+            {exercise.target} · {totalSets}×{exercise.reps} · RPE {exercise.rpe}
+            {extraSet && <span className="tracker-badge">+1 set this phase</span>}
+            {isFirst && <span className="tracker-badge tracker-badge-ramp">warm-up first</span>}
+          </div>
+        </div>
+        <E size={16}>{open ? "▴" : "▾"}</E>
+      </button>
+
+      {open && (
+        <div className="tracker-card-body">
+          {exercise.alt && (
+            <div className="tracker-alt-row"><E size={12}>⇄</E><span><strong>Alt:</strong> {exercise.alt}</span></div>
+          )}
+
+          {isFirst && (
+            <div className="tracker-ramp-wrap">
+              <button className="tracker-ramp-toggle" onClick={() => setShowRamp((s) => !s)}>
+                <E size={13}>🔥</E> Warm-up ramp <E size={13}>{showRamp ? "▴" : "▾"}</E>
+              </button>
+              {showRamp && (
+                <div className="tracker-ramp-body">
+                  <div className="tracker-ramp-step"><span>Set 1</span><span className="tracker-mono">~50% of working weight × 8</span></div>
+                  <div className="tracker-ramp-step"><span>Set 2</span><span className="tracker-mono">~75% of working weight × 5</span></div>
+                  <p className="tracker-ramp-note">Then go straight into your working sets below. Do this before this exercise only — everything else today just needs a slightly conservative first set.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <RestTimer seconds={exercise.rest} label={exercise.restLabel} />
+
+          {lastSession && (
+            <div className="tracker-lastsession">Last time: {lastSession.map((s) => `${s.weight || "-"}×${s.reps || "-"}`).join("  ·  ")}</div>
+          )}
+
+          <div className="tracker-set-rows">
+            <div className="tracker-set-row tracker-set-row-head"><span>Set</span><span>Weight</span><span>Reps</span></div>
+            {Array.from({ length: totalSets }).map((_, i) => (
+              <div className="tracker-set-row" key={i}>
+                <span className="tracker-set-num">{i + 1}</span>
+                <input type="number" inputMode="decimal" min="0"
+                  placeholder={lastSession?.[i]?.weight ? String(lastSession[i].weight) : "kg"}
+                  value={values?.[i]?.weight ?? ""}
+                  onChange={(e) => onChange(exercise.id, i, "weight", e.target.value)}
+                  className="tracker-input" />
+                <input type="number" inputMode="numeric" min="0"
+                  placeholder={lastSession?.[i]?.reps ? String(lastSession[i].reps) : "reps"}
+                  value={values?.[i]?.reps ?? ""}
+                  onChange={(e) => onChange(exercise.id, i, "reps", e.target.value)}
+                  className="tracker-input" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WeekLoader({ week }) {
+  const cycleWeek = ((week - 1) % 24) + 1;
+  const cycleNum = Math.floor((week - 1) / 24) + 1;
+  return (
+    <div className="tracker-loader-wrap">
+      <div className="tracker-bar">
+        {Array.from({ length: 24 }).map((_, i) => {
+          const w = i + 1, filled = w <= cycleWeek, isDeload = w === 9 || w === 19;
+          return <div key={i} className="tracker-plate" style={{ background: filled ? (isDeload ? "var(--accent-rust)" : "var(--accent-brass)") : "var(--panel-3)", height: isDeload ? "22px" : "16px", opacity: filled ? 1 : 0.5 }} title={`Week ${w}${isDeload ? " (deload)" : ""}`} />;
+        })}
+      </div>
+      <div className="tracker-loader-caption">Week {cycleWeek} of 24{cycleNum > 1 ? ` · Cycle ${cycleNum}` : ""}</div>
+    </div>
+  );
+}
+
+function App() {
+  const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [tab, setTab] = useState("today");
+  const [dayType, setDayType] = useState("Upper A");
+  const [values, setValues] = useState({});
+  const [saved, setSaved] = useState(false);
+  const [expandedLog, setExpandedLog] = useState(null);
+  const [trendExercise, setTrendExercise] = useState("Cable Lateral Raise");
+  const [pumpRows, setPumpRows] = useState([{ name: "", sets: "", reps: "" }]);
+  const [confirmingReset, setConfirmingReset] = useState(false);
+
+  useEffect(() => {
+    const meta = loadJSON("vtaper_meta", null);
+    if (meta) setStartDate(meta.startDate);
+    setLogs(loadJSON("vtaper_logs", []));
+    setLoading(false);
+  }, []);
+
+  const week = useMemo(() => {
+    if (!startDate) return 1;
+    const days = Math.floor((Date.now() - new Date(startDate).getTime()) / 86400000);
+    return Math.max(1, Math.floor(days / 7) + 1);
+  }, [startDate]);
+
+  const phase = getPhaseInfo(week);
+
+  useEffect(() => {
+    const lifting = logs.filter((l) => DAY_ORDER.includes(l.dayType));
+    if (lifting.length > 0) {
+      const last = lifting[lifting.length - 1];
+      const idx = DAY_ORDER.indexOf(last.dayType);
+      setDayType(DAY_ORDER[(idx + 1) % DAY_ORDER.length]);
+    }
+  }, [logs.length]);
+
+  const startProgram = () => {
+    const today = new Date().toISOString();
+    setStartDate(today);
+    saveJSON("vtaper_meta", { startDate: today });
+  };
+
+  const lastSessionFor = (dt, exerciseId) => {
+    const matches = logs.filter((l) => l.dayType === dt && l.exercises?.[exerciseId]);
+    if (matches.length === 0) return null;
+    return matches[matches.length - 1].exercises[exerciseId];
+  };
+
+  const handleChange = (exerciseId, setIdx, field, val) => {
+    const clean = stripNegative(val);
+    setValues((prev) => {
+      const ex = prev[exerciseId] ? [...prev[exerciseId]] : [];
+      ex[setIdx] = { ...ex[setIdx], [field]: clean };
+      return { ...prev, [exerciseId]: ex };
+    });
+  };
+
+  const saveWorkout = () => {
+    const exercisesLogged = {};
+    Object.entries(values).forEach(([id, sets]) => {
+      const cleaned = sets.filter((s) => s && (s.weight || s.reps));
+      if (cleaned.length > 0) exercisesLogged[id] = cleaned;
+    });
+    if (Object.keys(exercisesLogged).length === 0) return;
+    const newLog = { date: new Date().toISOString(), dayType, week, phase: phase.name, exercises: exercisesLogged };
+    const newLogs = [...logs, newLog];
+    setLogs(newLogs); setValues({});
+    saveJSON("vtaper_logs", newLogs);
+    setSaved(true); setTimeout(() => setSaved(false), 2000);
+  };
+
+  const savePumpDay = () => {
+    const cleaned = pumpRows.filter((r) => r.name.trim());
+    if (cleaned.length === 0) return;
+    const newLog = { date: new Date().toISOString(), dayType: "Pump/Recovery", week, phase: phase.name, pump: cleaned };
+    const newLogs = [...logs, newLog];
+    setLogs(newLogs); setPumpRows([{ name: "", sets: "", reps: "" }]);
+    saveJSON("vtaper_logs", newLogs);
+    setSaved(true); setTimeout(() => setSaved(false), 2000);
+  };
+
+  const resetAll = () => {
+    setLogs([]); setStartDate(null); setConfirmingReset(false);
+    localStorage.removeItem("vtaper_logs");
+    localStorage.removeItem("vtaper_meta");
+  };
+
+  const exportData = () => {
+    const payload = JSON.stringify({ startDate, logs }, null, 2);
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `vtaper-log-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const addPumpPreset = (name) => {
+    setPumpRows((prev) => {
+      const lastEmpty = prev.length > 0 && !prev[prev.length - 1].name.trim();
+      const preset = { name, sets: name === "Easy Incline Walk" ? "1" : "2", reps: name === "Easy Incline Walk" ? "10 min" : "15-20" };
+      if (lastEmpty) { const copy = [...prev]; copy[copy.length - 1] = preset; return copy; }
+      return [...prev, preset];
+    });
+  };
+
+  const allExerciseNames = useMemo(() => {
+    const names = new Set();
+    Object.values(PROGRAM).forEach((list) => list.forEach((e) => names.add(e.name)));
+    return Array.from(names);
+  }, []);
+
+  const trendData = useMemo(() => {
+    const idMatch = Object.values(PROGRAM).flat().find((e) => e.name === trendExercise);
+    if (!idMatch) return [];
+    return logs.filter((l) => l.exercises?.[idMatch.id]).map((l) => {
+      const sets = l.exercises[idMatch.id];
+      const top = Math.max(...sets.map((s) => Number(s.weight) || 0));
+      return { date: fmtDate(l.date), weight: top };
+    });
+  }, [logs, trendExercise]);
+
+  const liftingLogsDesc = [...logs].reverse();
+
+  if (loading) return <div className="tracker-root tracker-center"><E size={28}>🏋</E></div>;
+
+  if (!startDate) {
+    return (
+      <div className="tracker-root tracker-center">
+        <div className="tracker-onboard">
+          <E size={36}>🏋</E>
+          <h1 className="tracker-onboard-title">V-Taper Log</h1>
+          <p className="tracker-onboard-sub">Your 6-month hypertrophy program, tracked. Sets, reps, rest, and phase — all in one place. Works fully offline.</p>
+          <button className="tracker-primary-btn" onClick={startProgram}>Start Day 1 Today</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="tracker-root">
+      <div className="tracker-header">
+        <div className="tracker-header-top">
+          <div className="tracker-brand"><E size={18}>🏋</E><span>V-Taper Log</span></div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button className="tracker-icon-btn" onClick={exportData} title="Export backup"><E size={14}>⬇</E></button>
+            <button className="tracker-icon-btn" onClick={() => setConfirmingReset(true)} title="Reset all data"><E size={14}>↺</E></button>
+          </div>
+        </div>
+
+        {confirmingReset && (
+          <div className="tracker-confirm-panel">
+            <p className="tracker-confirm-text">This erases every logged workout and your start date, permanently. Consider tapping the download icon to export a backup first.</p>
+            <div className="tracker-confirm-actions">
+              <button className="tracker-confirm-cancel" onClick={() => setConfirmingReset(false)}>Cancel</button>
+              <button className="tracker-confirm-danger" onClick={resetAll}>Yes, delete everything</button>
+            </div>
+          </div>
+        )}
+
+        <WeekLoader week={week} />
+
+        <div className={`tracker-phase-banner ${phase.deload ? "is-deload" : ""}`}>
+          <div className="tracker-phase-name">{phase.name}</div>
+          <div className="tracker-phase-desc">{phase.desc}</div>
+          <div className="tracker-phase-rpe">Target RPE {phase.rpe}</div>
+        </div>
+
+        <div className="tracker-tabs">
+          <button className={`tracker-tab ${tab === "today" ? "active" : ""}`} onClick={() => setTab("today")}>Today</button>
+          <button className={`tracker-tab ${tab === "history" ? "active" : ""}`} onClick={() => setTab("history")}>History</button>
+        </div>
+      </div>
+
+      {tab === "today" && (
+        <div className="tracker-body">
+          <div className="tracker-day-select">
+            {[...DAY_ORDER, "Pump/Recovery"].map((d) => (
+              <button key={d} className={`tracker-day-btn ${dayType === d ? "active" : ""}`} onClick={() => setDayType(d)}>{d}</button>
+            ))}
+          </div>
+
+          {dayType !== "Pump/Recovery" && (
+            <div className="tracker-card tracker-warmup-card">
+              <div className="tracker-card-body" style={{ paddingTop: 14 }}>
+                <div className="tracker-warmup-title"><E size={14}><span style={{ color: "var(--accent-rust)" }}>🔥</span></E>General warm-up (5-8 min, before lifting)</div>
+                <p className="tracker-pump-note">5 min light cardio (bike/rower) · dynamic mobility — arm circles, band pull-aparts, hip circles{dayType.startsWith("Lower") ? ", leg swings" : ""}. Then ramp-up sets on the first exercise below.</p>
+              </div>
+            </div>
+          )}
+
+          {dayType === "Pump/Recovery" ? (
+            <div className="tracker-card">
+              <div className="tracker-card-body" style={{ paddingTop: 14 }}>
+                <p className="tracker-pump-note">RPE 3-4, ~15 min, well short of failure. Tap a preset or add your own.</p>
+                <div className="tracker-preset-row">
+                  {PUMP_PRESETS.map((p) => <button key={p} className="tracker-preset-chip" onClick={() => addPumpPreset(p)}>{p}</button>)}
+                </div>
+                {pumpRows.map((row, i) => (
+                  <div className="tracker-pump-row" key={i}>
+                    <input className="tracker-input" placeholder="Movement" value={row.name}
+                      onChange={(e) => { const r = [...pumpRows]; r[i].name = e.target.value; setPumpRows(r); }} />
+                    <input className="tracker-input" placeholder="sets" value={row.sets}
+                      onChange={(e) => { const r = [...pumpRows]; r[i].sets = stripNegative(e.target.value); setPumpRows(r); }} />
+                    <input className="tracker-input" placeholder="reps" value={row.reps}
+                      onChange={(e) => { const r = [...pumpRows]; r[i].reps = stripNegative(e.target.value); setPumpRows(r); }} />
+                    <button className="tracker-icon-btn" onClick={() => setPumpRows(pumpRows.filter((_, idx) => idx !== i))}><E size={13}>🗑</E></button>
+                  </div>
+                ))}
+                <button className="tracker-add-row" onClick={() => setPumpRows([...pumpRows, { name: "", sets: "", reps: "" }])}><E size={13}>+</E> Add movement</button>
+              </div>
+            </div>
+          ) : (
+            PROGRAM[dayType].map((ex, idx) => (
+              <ExerciseCard key={ex.id} exercise={ex} phase={phase} lastSession={lastSessionFor(dayType, ex.id)} values={values[ex.id]} onChange={handleChange} isFirst={idx === 0} />
+            ))
+          )}
+
+          <button className="tracker-primary-btn tracker-save-btn" onClick={dayType === "Pump/Recovery" ? savePumpDay : saveWorkout}>
+            {saved ? <><E size={15}>✓</E> Saved</> : "Save Workout"}
+          </button>
+        </div>
+      )}
+
+      {tab === "history" && (
+        <div className="tracker-body">
+          <div className="tracker-card">
+            <div className="tracker-card-body" style={{ paddingTop: 14 }}>
+              <div className="tracker-trend-head">
+                <E size={14}><span style={{ color: "var(--accent-brass)" }}>📈</span></E>
+                <select className="tracker-select" value={trendExercise} onChange={(e) => setTrendExercise(e.target.value)}>
+                  {allExerciseNames.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <MiniLineChart data={trendData} />
+            </div>
+          </div>
+
+          {liftingLogsDesc.length === 0 && <p className="tracker-empty-note">No sessions logged yet.</p>}
+
+          {liftingLogsDesc.map((log, i) => {
+            const key = log.date + i;
+            const isOpen = expandedLog === key;
+            return (
+              <div className="tracker-card" key={key}>
+                <button className="tracker-card-head" onClick={() => setExpandedLog(isOpen ? null : key)}>
+                  <div className="tracker-card-titlewrap">
+                    <div className="tracker-card-title">{log.dayType}</div>
+                    <div className="tracker-card-sub">{fmtDate(log.date)} · Week {log.week} · {log.phase}</div>
+                  </div>
+                  <E size={16}>{isOpen ? "▴" : "▾"}</E>
+                </button>
+                {isOpen && (
+                  <div className="tracker-card-body">
+                    {log.pump
+                      ? log.pump.map((p, idx) => <div className="tracker-history-row" key={idx}><span>{p.name}</span><span className="tracker-mono">{p.sets}×{p.reps}</span></div>)
+                      : Object.entries(log.exercises).map(([id, sets]) => {
+                          const ex = Object.values(PROGRAM).flat().find((e) => e.id === id);
+                          return <div className="tracker-history-row" key={id}><span>{ex?.name || id}</span><span className="tracker-mono">{sets.map((s) => `${s.weight || "-"}×${s.reps || "-"}`).join("  ")}</span></div>;
+                        })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
