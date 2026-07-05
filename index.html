@@ -41,6 +41,7 @@ body { margin: 0; background: #0B0C0E; }
   background: var(--panel-2); border: none; color: var(--text-muted); width: 30px; height: 30px;
   border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px;
 }
+.tracker-icon-btn-lg { width: 40px; height: 40px; border-radius: 8px; }
 .tracker-loader-wrap { margin-bottom: 14px; }
 .tracker-bar { display: flex; align-items: flex-end; gap: 2px; height: 24px; }
 .tracker-plate { flex: 1; border-radius: 2px 2px 0 0; }
@@ -361,6 +362,7 @@ function App() {
   const [trendExercise, setTrendExercise] = useState("Cable Lateral Raise");
   const [pumpRows, setPumpRows] = useState([{ name: "", sets: "", reps: "" }]);
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
 
   const loadAppData = async (tok) => {
     setWakingServer(true);
@@ -596,9 +598,9 @@ function App() {
         <div className="tracker-header-top">
           <div className="tracker-brand"><E size={18}>🏋</E><span>V-Taper Log</span></div>
           <div style={{ display: "flex", gap: 6 }}>
-            <button className="tracker-icon-btn" onClick={exportData} title="Export backup"><E size={14}>⬇</E></button>
-            <button className="tracker-icon-btn" onClick={() => setConfirmingReset(true)} title="Reset all data"><E size={14}>↺</E></button>
-            <button className="tracker-icon-btn" onClick={logout} title="Log out"><E size={14}>⏻</E></button>
+            <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={exportData} title="Export backup"><E size={19}>⬇</E></button>
+            <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={() => setConfirmingReset(true)} title="Reset all data"><E size={19}>↺</E></button>
+            <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={() => setConfirmingLogout(true)} title="Log out"><E size={19}>⏻</E></button>
           </div>
         </div>
 
@@ -614,6 +616,16 @@ function App() {
             <div className="tracker-confirm-actions">
               <button className="tracker-confirm-cancel" onClick={() => setConfirmingReset(false)}>Cancel</button>
               <button className="tracker-confirm-danger" onClick={resetAll}>Yes, delete everything</button>
+            </div>
+          </div>
+        )}
+
+        {confirmingLogout && (
+          <div className="tracker-confirm-panel">
+            <p className="tracker-confirm-text">You'll need your username and password to log back in on this device. Your workout data stays safe on the server either way.</p>
+            <div className="tracker-confirm-actions">
+              <button className="tracker-confirm-cancel" onClick={() => setConfirmingLogout(false)}>Cancel</button>
+              <button className="tracker-confirm-danger" onClick={() => { setConfirmingLogout(false); logout(); }}>Log out</button>
             </div>
           </div>
         )}
