@@ -4,19 +4,18 @@ The app is skinned entirely through **CSS custom properties (design tokens)** de
 `.tracker-root` in `index.html`. Every surface reads from tokens, so switching the
 `data-theme` attribute on the root reskins the whole app — no per-component rewrites.
 
-There are currently **three themes**: `sundso` (default), `8bit`, and `dark`. Adding more
-is a copy-paste of one token block (see [Adding a theme](#adding-a-theme)).
+There are **two themes**: `8bit` (default) and `dark`. Adding more is a copy-paste of one
+token block (see [Adding a theme](#adding-a-theme)).
 
 ```
-.tracker-root                     ← token contract + defaults (= "sundso" theme)
-.tracker-root[data-theme="8bit"]  ← override block for the 8-bit theme
-.tracker-root[data-theme="dark"]  ← override block for dark mode (color only)
+.tracker-root                     ← token contract + defaults (= "8bit" theme)
+.tracker-root[data-theme="dark"]  ← self-contained override block for dark mode
 ```
 
 The active theme lives in React state (`theme`), is persisted to
 `localStorage["vtaper_theme"]`, and is applied as `data-theme={theme}` on every
 `.tracker-root`. The header button cycles through `THEMES` (`cycleTheme`) and shows the
-current theme's icon (🛋 / 🎮 / 🌙).
+current theme's icon (🎮 / 🌙).
 
 ---
 
@@ -61,24 +60,11 @@ never a raw hex, radius, or font.
 
 ---
 
-## Theme: `sundso` (default) — IKEA-inspired
-
-White surfaces on a light canvas, blue + yellow accents, soft rounded corners, soft shadows.
-
-| Token | Value |
-|---|---|
-| bg / panel / panel-2 / panel-3 | `#f5f5f5` / `#ffffff` / `#f2f2f3` / `#dedede` |
-| text / text-muted | `#111111` / `#6b6b6b` |
-| brass / green / rust / yellow | `#0058a3` / `#0a8a00` / `#cc0008` / `#ffdb00` |
-| fonts | Noto Sans (display+body) / Noto Sans Mono |
-| radius card/ctl/pill | `12px` / `6px` / `22px` |
-| border-w | `1px` |
-| shadow-card | `0 1px 3px rgba(0,0,0,0.06)` |
-
-## Theme: `8bit` — Pixel Gamer
+## Theme: `8bit` (default) — Pixel Gamer
 
 Sky-blue canvas, cream panels, brown ink, arcade fonts, **zero radius**, thick borders,
 hard "pixel" offset shadows, uppercase titles, tactile press effect on buttons.
+Lives directly on `.tracker-root` (it's the default block).
 
 | Token | Value |
 |---|---|
@@ -91,24 +77,26 @@ hard "pixel" offset shadows, uppercase titles, tactile press effect on buttons.
 | shadow-card / btn-shadow | `3px 3px 0 var(--text)` |
 | titles | `uppercase` |
 
-## Theme: `dark`
+> **Font note:** the reference "Pixel Gamer" font is a paid Ditatype font. These are the
+> closest free Google Fonts. Press Start 2P is tall/wide, so
+> `.tracker-root:not([data-theme="dark"])` rules shrink the arcade headings
+> (`.tracker-onboard-title`, `.tracker-brand`, `.tracker-phase-name`) and bump
+> `--font-mono` (VT323) up a couple px to stay legible.
 
-Same IKEA shape/type language as `sundso`, inverted palette. Demonstrates a **color-only**
-theme — it overrides just the color tokens and `--shadow-card`, inheriting every shape and
-font default from the contract.
+## Theme: `dark` — clean modern dark mode
+
+Self-contained: rounded corners, soft shadows, Noto Sans. Overrides the pixel defaults
+completely (color **and** shape **and** type), so nothing 8-bit leaks through.
 
 | Token | Value |
 |---|---|
 | bg / panel / panel-2 / panel-3 | `#0f1115` / `#1a1d23` / `#242832` / `#363b47` |
 | text / text-muted | `#e8eaed` / `#9aa0ac` |
 | brass / green / rust / yellow | `#4a9eff` / `#3ecf8e` / `#ff5c5c` / `#ffd34e` |
-| fonts / shape | inherited from contract (Noto Sans, rounded) |
-| shadow-card | `0 1px 3px rgba(0,0,0,0.4)` |
-
-> **Font note:** the reference "Pixel Gamer" font is a paid Ditatype font. These are the
-> closest free Google Fonts. Press Start 2P is tall/wide, so the 8-bit block shrinks the
-> arcade headings (`.tracker-onboard-title`, `.tracker-brand`, `.tracker-phase-name`) and
-> bumps `--font-mono` (VT323) up a couple px to stay legible.
+| fonts | Noto Sans / Noto Sans Mono |
+| radius card/ctl/pill | `12px` / `6px` / `22px` |
+| border-w / shadow-card | `1px` / `0 1px 3px rgba(0,0,0,0.4)` |
+| titles | normal case |
 
 ---
 
@@ -120,13 +108,18 @@ font default from the contract.
   focused inputs, chart line all use it. Don't introduce a second "primary."
 - **`--accent-rust` = destructive/warning only.** Reset, logout confirm, deload banner.
 - If a new surface needs a shape not covered, add a *new token* (e.g. `--radius-xl`) to the
-  contract and define it in **both** themes — don't one-off a raw value.
+  contract and define it in **every** theme block.
 
 ## Adding a theme
 
-1. Copy the `.tracker-root[data-theme="8bit"]` block, rename to your theme id.
+1. Copy the `.tracker-root[data-theme="dark"]` block (it's a full, self-contained override —
+   the safest starting point) and rename to your theme id.
 2. Override every token in the [contract](#token-contract). If a font isn't already in the
    `@import` at the top of the `<style>`, add it there.
-3. Add the id to `cycleTheme` in `index.html` (or make it a select if you go past two).
-4. Add font-size overrides only if your display font overflows (like the 8-bit block does).
+3. Add the id to the `THEMES` array and `THEME_ICON` map in `index.html` (`App` component).
+4. Add font-size overrides only if your display font overflows (like the 8-bit `:not([dark])`
+   rules do).
 5. Document it here with a token table.
+
+> The **default** theme is whatever sits directly on `.tracker-root`. To change the default,
+> move those token values; keep the others as `[data-theme="…"]` override blocks.

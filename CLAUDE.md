@@ -6,8 +6,8 @@ small API (`src/`). Styling is a **token-based, multi-theme design system**.
 ## Design system — READ BEFORE ANY UI WORK
 
 All styling is driven by CSS custom-property **tokens** on `.tracker-root`, switched via a
-`data-theme` attribute. Two themes exist: `sundso` (default, IKEA-inspired) and `8bit`
-(Pixel Gamer). When adding or changing any UI:
+`data-theme` attribute. Two themes exist: `8bit` (default, Pixel Gamer) and `dark` (clean
+modern dark mode). When adding or changing any UI:
 
 - **Consume tokens, never hardcode** colors/radius/fonts/borders. See the full token
   contract, both palettes, and the "adding a theme" recipe in **[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)**.

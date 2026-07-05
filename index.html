@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="V-Taper Log" />
-<meta name="theme-color" content="#0058a3" />
+<meta name="theme-color" content="#86c5e0" />
 <meta name="mobile-web-app-capable" content="yes" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png" />
@@ -21,65 +21,58 @@ body { margin: 0; background: #ebecee; }
    DESIGN SYSTEM — TOKEN CONTRACT
    Every surface reads from these variables, so swapping the
    data-theme on .tracker-root reskins the whole app.
-   Default block below = "sundso" (IKEA-inspired) theme.
+   Two themes: "8bit" (default, below) and "dark".
    See DESIGN_SYSTEM.md for the full spec + how to add a theme.
-   ============================================================ */
-.tracker-root {
-  /* -- color -- */
-  --bg: #f5f5f5; --panel: #ffffff; --panel-2: #f2f2f3; --panel-3: #dedede;
-  --text: #111111; --text-muted: #6b6b6b;
-  --accent-brass: #0058a3; --accent-green: #0a8a00; --accent-rust: #cc0008; --accent-yellow: #ffdb00;
-  /* -- type -- */
-  --font-display: 'Noto Sans', sans-serif; --font-body: 'Noto Sans', sans-serif; --font-mono: 'Noto Sans Mono', monospace;
-  --title-transform: none; --title-spacing: -0.3px;
-  /* -- shape -- */
-  --radius-card: 12px; --radius-ctl: 6px; --radius-pill: 22px;
-  --border-w: 1px;
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.06);
-  --btn-shadow: none; --btn-press: none;
 
-  background: var(--bg); color: var(--text); font-family: var(--font-body);
-  min-height: 100vh; max-width: 480px; margin: 0 auto; overflow-x: hidden;
-}
-
-/* ============================================================
-   THEME: "8bit" — Pixel Gamer
+   DEFAULT THEME: "8bit" — Pixel Gamer
    Sky-blue canvas, cream panels, brown ink, arcade fonts,
    zero radius, thick borders, hard offset "pixel" shadows.
    ============================================================ */
-.tracker-root[data-theme="8bit"] {
+.tracker-root {
+  /* -- color -- */
   --bg: #86c5e0; --panel: #f6ecd0; --panel-2: #ece0be; --panel-3: #c9b78d;
   --text: #3d2b23; --text-muted: #866b58;
   --accent-brass: #2f6f97; --accent-green: #6a8f3c; --accent-rust: #d1544a; --accent-yellow: #f4c542;
+  /* -- type -- */
   --font-display: 'Press Start 2P', monospace; --font-body: 'Pixelify Sans', sans-serif; --font-mono: 'VT323', monospace;
   --title-transform: uppercase; --title-spacing: 0;
+  /* -- shape -- */
   --radius-card: 0px; --radius-ctl: 0px; --radius-pill: 0px;
   --border-w: 2px;
   --shadow-card: 3px 3px 0 var(--text);
   --btn-shadow: 3px 3px 0 var(--text); --btn-press: translate(2px, 2px);
+
+  background: var(--bg); color: var(--text); font-family: var(--font-body);
+  min-height: 100vh; max-width: 480px; margin: 0 auto; overflow-x: hidden;
 }
-/* Press Start 2P is tall/wide — tighten the arcade headings so they fit 480px */
-.tracker-root[data-theme="8bit"] .tracker-onboard-title { font-size: 17px; line-height: 1.5; }
-.tracker-root[data-theme="8bit"] .tracker-brand { font-size: 11px; }
-.tracker-root[data-theme="8bit"] .tracker-phase-name { font-size: 11px; line-height: 1.5; }
-.tracker-root[data-theme="8bit"] .tracker-mono,
-.tracker-root[data-theme="8bit"] .tracker-input,
-.tracker-root[data-theme="8bit"] .tracker-set-num,
-.tracker-root[data-theme="8bit"] .tracker-lastsession { font-size: 15px; }
-.tracker-root[data-theme="8bit"] .tracker-primary-btn:active,
-.tracker-root[data-theme="8bit"] .tracker-day-btn:active,
-.tracker-root[data-theme="8bit"] .tracker-preset-chip:active { transform: var(--btn-press); box-shadow: none; }
+/* Press Start 2P is tall/wide — tighten the arcade headings so they fit 480px.
+   Applies to the 8-bit theme (everything that is NOT dark). */
+.tracker-root:not([data-theme="dark"]) .tracker-onboard-title { font-size: 17px; line-height: 1.5; }
+.tracker-root:not([data-theme="dark"]) .tracker-brand { font-size: 11px; }
+.tracker-root:not([data-theme="dark"]) .tracker-phase-name { font-size: 11px; line-height: 1.5; }
+.tracker-root:not([data-theme="dark"]) .tracker-mono,
+.tracker-root:not([data-theme="dark"]) .tracker-input,
+.tracker-root:not([data-theme="dark"]) .tracker-set-num,
+.tracker-root:not([data-theme="dark"]) .tracker-lastsession { font-size: 15px; }
+.tracker-root:not([data-theme="dark"]) .tracker-primary-btn:active,
+.tracker-root:not([data-theme="dark"]) .tracker-day-btn:active,
+.tracker-root:not([data-theme="dark"]) .tracker-preset-chip:active { transform: var(--btn-press); box-shadow: none; }
 
 /* ============================================================
-   THEME: "dark" — same IKEA shape language, inverted palette.
-   Demonstrates that a theme can restyle color only, reusing
-   every shape/type default from the contract.
+   THEME: "dark" — clean, modern dark mode.
+   Self-contained: rounded corners, soft shadows, Noto Sans —
+   overrides the pixel defaults above completely.
    ============================================================ */
 .tracker-root[data-theme="dark"] {
   --bg: #0f1115; --panel: #1a1d23; --panel-2: #242832; --panel-3: #363b47;
   --text: #e8eaed; --text-muted: #9aa0ac;
   --accent-brass: #4a9eff; --accent-green: #3ecf8e; --accent-rust: #ff5c5c; --accent-yellow: #ffd34e;
+  --font-display: 'Noto Sans', sans-serif; --font-body: 'Noto Sans', sans-serif; --font-mono: 'Noto Sans Mono', monospace;
+  --title-transform: none; --title-spacing: -0.3px;
+  --radius-card: 12px; --radius-ctl: 6px; --radius-pill: 22px;
+  --border-w: 1px;
   --shadow-card: 0 1px 3px rgba(0,0,0,0.4);
+  --btn-shadow: none; --btn-press: none;
 }
 .tracker-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .tracker-emoji { line-height: 1; display: inline-block; }
@@ -561,11 +554,14 @@ function App() {
   const [pumpRows, setPumpRows] = useState([{ name: "", sets: "", reps: "" }]);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
-  const [theme, setTheme] = useState(() => loadJSON("vtaper_theme", "sundso"));
+  const THEMES = ["8bit", "dark"];
+  const THEME_ICON = { "8bit": "🎮", dark: "🌙" };
+  const [theme, setTheme] = useState(() => {
+    const saved = loadJSON("vtaper_theme", "8bit");
+    return THEMES.includes(saved) ? saved : "8bit"; // migrate retired "sundso"
+  });
 
   useEffect(() => { saveJSON("vtaper_theme", theme); }, [theme]);
-  const THEMES = ["sundso", "8bit", "dark"];
-  const THEME_ICON = { sundso: "🛋", "8bit": "🎮", dark: "🌙" };
   const cycleTheme = () => setTheme((t) => THEMES[(THEMES.indexOf(t) + 1) % THEMES.length]);
 
   const loadAppData = async (tok) => {
