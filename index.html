@@ -454,6 +454,17 @@ function App() {
     return matches[matches.length - 1].exercises[exerciseId];
   };
 
+  // Pre-fill this day's inputs with last time's numbers, so you're adjusting instead of retyping from scratch.
+  useEffect(() => {
+    if (dayType === "Pump/Recovery" || !PROGRAM[dayType]) return;
+    const seeded = {};
+    PROGRAM[dayType].forEach((ex) => {
+      const last = lastSessionFor(dayType, ex.id);
+      if (last) seeded[ex.id] = last.map((s) => ({ weight: s.weight ?? "", reps: s.reps ?? "" }));
+    });
+    setValues(seeded);
+  }, [dayType, logs]);
+
   const handleChange = (exerciseId, setIdx, field, val) => {
     const clean = stripNegative(val);
     setValues((prev) => {
