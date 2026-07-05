@@ -8,10 +8,20 @@ async function getLogs() {
 }
 
 async function addLog({ date, dayType, week, phase, exercises, pump }) {
+  // exercises/pump are JSONB. node-postgres binds a JS array as a Postgres
+  // array literal (not JSON), so `pump` (an array) must be stringified or the
+  // insert fails. Stringify both for consistency.
   const result = await pool.query(
     `INSERT INTO logs (date, day_type, week, phase, exercises, pump)
      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-    [date, dayType, week || null, phase || null, exercises || null, pump || null]
+    [
+      date,
+      dayType,
+      week || null,
+      phase || null,
+      exercises ? JSON.stringify(exercises) : null,
+      pump ? JSON.stringify(pump) : null,
+    ]
   );
   return result.rows[0];
 }
