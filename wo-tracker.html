@@ -26,6 +26,8 @@ body { margin: 0; background: #0B0C0E; }
 .tracker-onboard { text-align: center; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .tracker-onboard-title { font-family: var(--font-display); font-size: 26px; letter-spacing: 0.5px; margin: 4px 0 0; }
 .tracker-onboard-sub { color: var(--text-muted); font-size: 13px; line-height: 1.5; max-width: 300px; }
+.tracker-onboard-hint { color: var(--text-muted); font-size: 11px; line-height: 1.5; max-width: 280px; margin-top: 4px; }
+.tracker-login-error { color: #E8918A; font-size: 12px; margin: 0; }
 .tracker-primary-btn {
   background: var(--accent-brass); color: #1A1A1A; font-weight: 600; border: none;
   padding: 12px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 8px;
@@ -169,6 +171,30 @@ function fmtDate(d) { return new Date(d).toLocaleDateString(undefined, { month: 
 const stripNegative = (v) => v.replace(/-/g, "");
 const loadJSON = (key, fallback) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } };
 const saveJSON = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; } };
+
+const API_BASE = "https://vtaper-server.onrender.com";
+
+async function apiFetch(path, token, options = {}) {
+  const res = await fetch(API_BASE + path, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    let msg = `Request failed (${res.status})`;
+    try { const body = await res.json(); if (body?.error) msg = body.error; } catch (e) {}
+    throw new Error(msg);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+function normalizeLog(row) {
+  return { date: row.date, dayType: row.day_type, week: row.week, phase: row.phase, exercises: row.exercises || undefined, pump: row.pump || undefined };
+}
 
 function MiniLineChart({ data }) {
   if (data.length < 2) return <p className="tracker-empty-note">Log this exercise at least twice to see a trend.</p>;
@@ -318,6 +344,13 @@ function WeekLoader({ week }) {
 
 function App() {
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
+  const [wakingServer, setWakingServer] = useState(false);
+  const [dataError, setDataError] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [logs, setLogs] = useState([]);
   const [tab, setTab] = useState("today");
@@ -329,12 +362,61 @@ function App() {
   const [pumpRows, setPumpRows] = useState([{ name: "", sets: "", reps: "" }]);
   const [confirmingReset, setConfirmingReset] = useState(false);
 
+  const loadAppData = async (tok) => {
+    setWakingServer(true);
+    setDataError("");
+    try {
+      const [meta, logsData] = await Promise.all([apiFetch("/api/meta", tok), apiFetch("/api/logs", tok)]);
+      setStartDate(meta ? meta.start_date : null);
+      setLogs((logsData || []).map(normalizeLog));
+    } catch (err) {
+      if (/token|credentials/i.test(err.message)) {
+        localStorage.removeItem("vtaper_token");
+        setToken(null);
+      } else {
+        setDataError(err.message || "Couldn't load your data");
+      }
+    } finally {
+      setWakingServer(false);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const meta = loadJSON("vtaper_meta", null);
-    if (meta) setStartDate(meta.startDate);
-    setLogs(loadJSON("vtaper_logs", []));
-    setLoading(false);
+    const saved = loadJSON("vtaper_token", null);
+    if (saved) {
+      setToken(saved);
+      loadAppData(saved);
+    } else {
+      setLoading(false);
+    }
   }, []);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError("");
+    setLoggingIn(true);
+    try {
+      const data = await apiFetch("/api/auth/login", null, {
+        method: "POST",
+        body: JSON.stringify({ username: loginUsername, password: loginPassword }),
+      });
+      saveJSON("vtaper_token", data.token);
+      setToken(data.token);
+      await loadAppData(data.token);
+    } catch (err) {
+      setLoginError(err.message || "Login failed");
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("vtaper_token");
+    setToken(null);
+    setStartDate(null);
+    setLogs([]);
+  };
 
   const week = useMemo(() => {
     if (!startDate) return 1;
@@ -353,10 +435,15 @@ function App() {
     }
   }, [logs.length]);
 
-  const startProgram = () => {
+  const startProgram = async () => {
     const today = new Date().toISOString();
-    setStartDate(today);
-    saveJSON("vtaper_meta", { startDate: today });
+    setDataError("");
+    try {
+      await apiFetch("/api/meta", token, { method: "POST", body: JSON.stringify({ startDate: today }) });
+      setStartDate(today);
+    } catch (err) {
+      setDataError(err.message || "Couldn't start the program");
+    }
   };
 
   const lastSessionFor = (dt, exerciseId) => {
@@ -374,34 +461,54 @@ function App() {
     });
   };
 
-  const saveWorkout = () => {
+  const saveWorkout = async () => {
     const exercisesLogged = {};
     Object.entries(values).forEach(([id, sets]) => {
       const cleaned = sets.filter((s) => s && (s.weight || s.reps));
       if (cleaned.length > 0) exercisesLogged[id] = cleaned;
     });
     if (Object.keys(exercisesLogged).length === 0) return;
-    const newLog = { date: new Date().toISOString(), dayType, week, phase: phase.name, exercises: exercisesLogged };
-    const newLogs = [...logs, newLog];
-    setLogs(newLogs); setValues({});
-    saveJSON("vtaper_logs", newLogs);
-    setSaved(true); setTimeout(() => setSaved(false), 2000);
+    setDataError("");
+    try {
+      const row = await apiFetch("/api/logs", token, {
+        method: "POST",
+        body: JSON.stringify({ date: new Date().toISOString(), dayType, week, phase: phase.name, exercises: exercisesLogged }),
+      });
+      setLogs((prev) => [...prev, normalizeLog(row)]);
+      setValues({});
+      setSaved(true); setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      setDataError(err.message || "Couldn't save that workout");
+    }
   };
 
-  const savePumpDay = () => {
+  const savePumpDay = async () => {
     const cleaned = pumpRows.filter((r) => r.name.trim());
     if (cleaned.length === 0) return;
-    const newLog = { date: new Date().toISOString(), dayType: "Pump/Recovery", week, phase: phase.name, pump: cleaned };
-    const newLogs = [...logs, newLog];
-    setLogs(newLogs); setPumpRows([{ name: "", sets: "", reps: "" }]);
-    saveJSON("vtaper_logs", newLogs);
-    setSaved(true); setTimeout(() => setSaved(false), 2000);
+    setDataError("");
+    try {
+      const row = await apiFetch("/api/logs", token, {
+        method: "POST",
+        body: JSON.stringify({ date: new Date().toISOString(), dayType: "Pump/Recovery", week, phase: phase.name, pump: cleaned }),
+      });
+      setLogs((prev) => [...prev, normalizeLog(row)]);
+      setPumpRows([{ name: "", sets: "", reps: "" }]);
+      setSaved(true); setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      setDataError(err.message || "Couldn't save that session");
+    }
   };
 
-  const resetAll = () => {
-    setLogs([]); setStartDate(null); setConfirmingReset(false);
-    localStorage.removeItem("vtaper_logs");
-    localStorage.removeItem("vtaper_meta");
+  const resetAll = async () => {
+    setConfirmingReset(false);
+    setDataError("");
+    try {
+      await apiFetch("/api/reset", token, { method: "DELETE" });
+    } catch (err) {
+      setDataError(err.message || "Couldn't reset — your data may still be intact");
+    }
+    setLogs([]);
+    setStartDate(null);
   };
 
   const exportData = () => {
@@ -441,7 +548,33 @@ function App() {
 
   const liftingLogsDesc = [...logs].reverse();
 
-  if (loading) return <div className="tracker-root tracker-center"><E size={28}>🏋</E></div>;
+  if (!token) {
+    return (
+      <div className="tracker-root tracker-center">
+        <form className="tracker-onboard" onSubmit={handleLogin}>
+          <E size={36}>🏋</E>
+          <h1 className="tracker-onboard-title">V-Taper Log</h1>
+          <p className="tracker-onboard-sub">Log in to sync your workouts across every device.</p>
+          <input className="tracker-input" style={{ width: "100%" }} placeholder="Username" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} autoCapitalize="none" />
+          <input className="tracker-input" style={{ width: "100%" }} type="password" placeholder="Password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
+          {loginError && <p className="tracker-login-error">{loginError}</p>}
+          <button className="tracker-primary-btn" type="submit" disabled={loggingIn}>{loggingIn ? "Logging in…" : "Log in"}</button>
+          <p className="tracker-onboard-hint">First request can take up to a minute if the server's been idle — that's normal, not an error.</p>
+        </form>
+      </div>
+    );
+  }
+
+  if (loading || wakingServer) {
+    return (
+      <div className="tracker-root tracker-center">
+        <div className="tracker-onboard">
+          <E size={28}>🏋</E>
+          <p className="tracker-onboard-sub">Connecting to the server… this can take up to a minute if it's been idle.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!startDate) {
     return (
@@ -449,7 +582,8 @@ function App() {
         <div className="tracker-onboard">
           <E size={36}>🏋</E>
           <h1 className="tracker-onboard-title">V-Taper Log</h1>
-          <p className="tracker-onboard-sub">Your 6-month hypertrophy program, tracked. Sets, reps, rest, and phase — all in one place. Works fully offline.</p>
+          <p className="tracker-onboard-sub">Your 6-month hypertrophy program, tracked. Sets, reps, rest, and phase — all in one place.</p>
+          {dataError && <p className="tracker-login-error">{dataError}</p>}
           <button className="tracker-primary-btn" onClick={startProgram}>Start Day 1 Today</button>
         </div>
       </div>
@@ -464,8 +598,15 @@ function App() {
           <div style={{ display: "flex", gap: 6 }}>
             <button className="tracker-icon-btn" onClick={exportData} title="Export backup"><E size={14}>⬇</E></button>
             <button className="tracker-icon-btn" onClick={() => setConfirmingReset(true)} title="Reset all data"><E size={14}>↺</E></button>
+            <button className="tracker-icon-btn" onClick={logout} title="Log out"><E size={14}>⏻</E></button>
           </div>
         </div>
+
+        {dataError && (
+          <div className="tracker-confirm-panel">
+            <p className="tracker-confirm-text">{dataError}</p>
+          </div>
+        )}
 
         {confirmingReset && (
           <div className="tracker-confirm-panel">
