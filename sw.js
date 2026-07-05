@@ -2,7 +2,7 @@
 // - Caches the app shell so it opens offline / installs to the home screen.
 // - Relays a message from the page to show the "rest over" notification via
 //   registration.showNotification (more reliable on Android than new Notification).
-const CACHE = "vtaper-v1";
+const CACHE = "vtaper-v2";
 const CORE = [
   "./",
   "./index.html",

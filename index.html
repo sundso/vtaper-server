@@ -7,52 +7,101 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="V-Taper Log" />
-<meta name="theme-color" content="#0058a3" />
+<meta name="theme-color" content="#86c5e0" />
 <meta name="mobile-web-app-capable" content="yes" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png" />
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&family=Noto+Sans+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&family=Noto+Sans+Mono:wght@400;500;600&family=Pixelify+Sans:wght@400;500;600;700&family=Press+Start+2P&family=VT323&display=swap');
 * { box-sizing: border-box; }
 body { margin: 0; background: #ebecee; }
+
+/* ============================================================
+   DESIGN SYSTEM — TOKEN CONTRACT
+   Every surface reads from these variables, so swapping the
+   data-theme on .tracker-root reskins the whole app.
+   Two themes: "8bit" (default, below) and "dark".
+   See DESIGN_SYSTEM.md for the full spec + how to add a theme.
+
+   DEFAULT THEME: "8bit" — Pixel Gamer
+   Sky-blue canvas, cream panels, brown ink, arcade fonts,
+   zero radius, thick borders, hard offset "pixel" shadows.
+   ============================================================ */
 .tracker-root {
-  /* IKEA-inspired: white surfaces on a light canvas, blue + yellow accents */
-  --bg: #f5f5f5; --panel: #ffffff; --panel-2: #f2f2f3; --panel-3: #dedede;
-  --text: #111111; --text-muted: #6b6b6b;
-  --accent-brass: #0058a3; --accent-green: #0a8a00; --accent-rust: #cc0008; --accent-yellow: #ffdb00;
-  --font-display: 'Noto Sans', sans-serif; --font-body: 'Noto Sans', sans-serif; --font-mono: 'Noto Sans Mono', monospace;
+  /* -- color -- */
+  --bg: #86c5e0; --panel: #f6ecd0; --panel-2: #ece0be; --panel-3: #c9b78d;
+  --text: #3d2b23; --text-muted: #866b58;
+  --accent-brass: #2f6f97; --accent-green: #6a8f3c; --accent-rust: #d1544a; --accent-yellow: #f4c542;
+  /* -- type -- */
+  --font-display: 'Press Start 2P', monospace; --font-body: 'Pixelify Sans', sans-serif; --font-mono: 'VT323', monospace;
+  --title-transform: uppercase; --title-spacing: 0;
+  /* -- shape -- */
+  --radius-card: 0px; --radius-ctl: 0px; --radius-pill: 0px;
+  --border-w: 2px;
+  --shadow-card: 3px 3px 0 var(--text);
+  --btn-shadow: 3px 3px 0 var(--text); --btn-press: translate(2px, 2px);
+
   background: var(--bg); color: var(--text); font-family: var(--font-body);
   min-height: 100vh; max-width: 480px; margin: 0 auto; overflow-x: hidden;
+}
+/* Press Start 2P is tall/wide — tighten the arcade headings so they fit 480px.
+   Applies to the 8-bit theme (everything that is NOT dark). */
+.tracker-root:not([data-theme="dark"]) .tracker-onboard-title { font-size: 17px; line-height: 1.5; }
+.tracker-root:not([data-theme="dark"]) .tracker-brand { font-size: 11px; }
+.tracker-root:not([data-theme="dark"]) .tracker-phase-name { font-size: 11px; line-height: 1.5; }
+.tracker-root:not([data-theme="dark"]) .tracker-mono,
+.tracker-root:not([data-theme="dark"]) .tracker-input,
+.tracker-root:not([data-theme="dark"]) .tracker-set-num,
+.tracker-root:not([data-theme="dark"]) .tracker-lastsession { font-size: 15px; }
+.tracker-root:not([data-theme="dark"]) .tracker-primary-btn:active,
+.tracker-root:not([data-theme="dark"]) .tracker-day-btn:active,
+.tracker-root:not([data-theme="dark"]) .tracker-preset-chip:active { transform: var(--btn-press); box-shadow: none; }
+
+/* ============================================================
+   THEME: "dark" — clean, modern dark mode.
+   Self-contained: rounded corners, soft shadows, Noto Sans —
+   overrides the pixel defaults above completely.
+   ============================================================ */
+.tracker-root[data-theme="dark"] {
+  --bg: #0f1115; --panel: #1a1d23; --panel-2: #242832; --panel-3: #363b47;
+  --text: #e8eaed; --text-muted: #9aa0ac;
+  --accent-brass: #4a9eff; --accent-green: #3ecf8e; --accent-rust: #ff5c5c; --accent-yellow: #ffd34e;
+  --font-display: 'Noto Sans', sans-serif; --font-body: 'Noto Sans', sans-serif; --font-mono: 'Noto Sans Mono', monospace;
+  --title-transform: none; --title-spacing: -0.3px;
+  --radius-card: 12px; --radius-ctl: 6px; --radius-pill: 22px;
+  --border-w: 1px;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.4);
+  --btn-shadow: none; --btn-press: none;
 }
 .tracker-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .tracker-emoji { line-height: 1; display: inline-block; }
 .tracker-onboard { text-align: center; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.tracker-onboard-title { font-family: var(--font-display); font-weight: 800; font-size: 26px; letter-spacing: -0.3px; margin: 4px 0 0; }
+.tracker-onboard-title { font-family: var(--font-display); font-weight: 800; font-size: 26px; letter-spacing: var(--title-spacing); text-transform: var(--title-transform); margin: 4px 0 0; }
 .tracker-onboard-sub { color: var(--text-muted); font-size: 13px; line-height: 1.5; max-width: 300px; }
 .tracker-onboard-hint { color: var(--text-muted); font-size: 11px; line-height: 1.5; max-width: 280px; margin-top: 4px; }
 .tracker-login-error { color: var(--accent-rust); font-size: 12px; margin: 0; }
 .tracker-primary-btn {
   background: var(--accent-brass); color: #fff; font-weight: 700; border: none;
-  padding: 13px 20px; border-radius: 24px; font-size: 14px; cursor: pointer; margin-top: 8px;
+  padding: 13px 20px; border-radius: var(--radius-pill); font-size: 14px; cursor: pointer; margin-top: 8px;
   display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
-  font-family: var(--font-body);
+  font-family: var(--font-body); box-shadow: var(--btn-shadow);
 }
 .tracker-header { background: var(--panel); padding: 18px 18px 0; position: sticky; top: 0; z-index: 5; border-bottom: 3px solid var(--accent-yellow); }
 .tracker-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .tracker-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: -0.2px; color: var(--accent-brass); }
 .tracker-icon-btn {
-  background: var(--panel-2); border: none; color: var(--text-muted); width: 30px; height: 30px;
-  border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px;
+  background: var(--panel-2); border: var(--border-w) solid var(--panel-3); color: var(--text-muted); width: 30px; height: 30px;
+  border-radius: var(--radius-ctl); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px;
 }
-.tracker-icon-btn-lg { width: 40px; height: 40px; border-radius: 8px; }
+.tracker-icon-btn-lg { width: 40px; height: 40px; border-radius: var(--radius-ctl); }
 .tracker-loader-wrap { margin-bottom: 14px; }
 .tracker-bar { display: flex; align-items: flex-end; gap: 2px; height: 24px; }
 .tracker-plate { flex: 1; border-radius: 2px 2px 0 0; }
 .tracker-loader-caption { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 6px; }
-.tracker-phase-banner { background: var(--panel-2); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; border-left: 3px solid var(--accent-brass); }
+.tracker-phase-banner { background: var(--panel-2); border-radius: var(--radius-card); padding: 12px 14px; margin-bottom: 14px; border-left: 3px solid var(--accent-brass); }
 .tracker-phase-banner.is-deload { border-left-color: var(--accent-rust); }
-.tracker-phase-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+.tracker-phase-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; text-transform: var(--title-transform); }
 .tracker-phase-desc { font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.4; }
 .tracker-phase-rpe { font-family: var(--font-mono); font-size: 11px; color: var(--accent-brass); margin-top: 6px; }
 .tracker-tabs { display: flex; gap: 4px; }
@@ -60,9 +109,9 @@ body { margin: 0; background: #ebecee; }
 .tracker-tab.active { color: var(--text); border-bottom-color: var(--accent-brass); }
 .tracker-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
 .tracker-day-select { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
-.tracker-day-btn { background: var(--panel-2); border: 1px solid var(--panel-3); color: var(--text-muted); padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; font-family: var(--font-body); }
+.tracker-day-btn { background: var(--panel-2); border: var(--border-w) solid var(--panel-3); color: var(--text-muted); padding: 6px 12px; border-radius: var(--radius-pill); font-size: 12px; cursor: pointer; font-family: var(--font-body); }
 .tracker-day-btn.active { background: var(--accent-brass); color: #fff; border-color: var(--accent-brass); font-weight: 600; }
-.tracker-card { background: var(--panel); border-radius: 12px; overflow: hidden; border: 1px solid var(--panel-3); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.tracker-card { background: var(--panel); border-radius: var(--radius-card); overflow: hidden; border: var(--border-w) solid var(--panel-3); box-shadow: var(--shadow-card); }
 .tracker-card-head { width: 100%; background: transparent; border: none; color: var(--text); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-align: left; }
 .tracker-card-titlewrap { display: flex; flex-direction: column; gap: 2px; }
 .tracker-card-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
@@ -72,39 +121,39 @@ body { margin: 0; background: #ebecee; }
 .tracker-card-body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; }
 .tracker-alt-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
 .tracker-alt-row strong { color: var(--text); font-weight: 600; }
-.tracker-ramp-wrap { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; }
+.tracker-ramp-wrap { background: var(--panel-2); border-radius: var(--radius-ctl); padding: 8px 10px; }
 .tracker-ramp-toggle { background: transparent; border: none; color: var(--accent-rust); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer; width: 100%; padding: 0; font-family: var(--font-body); }
 .tracker-ramp-body { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
 .tracker-ramp-step { display: flex; justify-content: space-between; font-size: 12px; }
 .tracker-ramp-note { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin: 4px 0 0; }
 .tracker-warmup-card { border-color: var(--accent-rust); }
 .tracker-warmup-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-.tracker-timer-btn { border: 1px solid var(--panel-3); background: transparent; color: var(--text); padding: 5px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+.tracker-timer-btn { border: var(--border-w) solid var(--panel-3); background: transparent; color: var(--text); padding: 5px 10px; border-radius: var(--radius-ctl); font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
 .tracker-rest-label { font-size: 11px; color: var(--text-muted); }
 .tracker-lastsession { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
 .tracker-set-rows { display: flex; flex-direction: column; gap: 6px; }
 .tracker-set-row { display: grid; grid-template-columns: 28px 1fr 1fr; gap: 8px; align-items: center; }
 .tracker-set-row-head { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .tracker-set-num { font-family: var(--font-mono); color: var(--accent-brass); font-size: 13px; }
-.tracker-input { background: var(--panel-2); border: 1px solid var(--panel-3); color: var(--text); padding: 7px 8px; border-radius: 6px; font-size: 13px; font-family: var(--font-mono); width: 100%; }
+.tracker-input { background: var(--panel-2); border: var(--border-w) solid var(--panel-3); color: var(--text); padding: 7px 8px; border-radius: var(--radius-ctl); font-size: 13px; font-family: var(--font-mono); width: 100%; }
 .tracker-input:focus { outline: none; border-color: var(--accent-brass); }
 .tracker-save-btn { position: sticky; bottom: 12px; }
 .tracker-pump-note { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
 .tracker-pump-row { display: grid; grid-template-columns: 2fr 1fr 1fr 28px; gap: 6px; align-items: center; }
-.tracker-add-row { background: transparent; border: 1px dashed var(--panel-3); color: var(--text-muted); padding: 8px; border-radius: 6px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
+.tracker-add-row { background: transparent; border: var(--border-w) dashed var(--panel-3); color: var(--text-muted); padding: 8px; border-radius: var(--radius-ctl); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
 .tracker-preset-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-.tracker-preset-chip { background: var(--panel-2); border: 1px solid var(--panel-3); color: var(--text-muted); padding: 5px 10px; border-radius: 20px; font-size: 11px; cursor: pointer; font-family: var(--font-body); }
+.tracker-preset-chip { background: var(--panel-2); border: var(--border-w) solid var(--panel-3); color: var(--text-muted); padding: 5px 10px; border-radius: var(--radius-pill); font-size: 11px; cursor: pointer; font-family: var(--font-body); }
 .tracker-trend-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.tracker-select { background: var(--panel-2); border: 1px solid var(--panel-3); color: var(--text); padding: 6px 8px; border-radius: 6px; font-size: 12px; flex: 1; font-family: var(--font-body); }
+.tracker-select { background: var(--panel-2); border: var(--border-w) solid var(--panel-3); color: var(--text); padding: 6px 8px; border-radius: var(--radius-ctl); font-size: 12px; flex: 1; font-family: var(--font-body); }
 .tracker-empty-note { font-size: 12px; color: var(--text-muted); text-align: center; padding: 12px 0; }
 .tracker-history-row { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid var(--panel-3); }
 .tracker-history-row:last-child { border-bottom: none; }
 .tracker-mono { font-family: var(--font-mono); color: var(--text-muted); }
-.tracker-confirm-panel { background: var(--panel-2); border: 1px solid var(--accent-rust); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
+.tracker-confirm-panel { background: var(--panel-2); border: var(--border-w) solid var(--accent-rust); border-radius: var(--radius-card); padding: 12px 14px; margin-bottom: 14px; }
 .tracker-confirm-text { font-size: 12px; color: var(--text); line-height: 1.5; margin: 0 0 10px; }
 .tracker-confirm-actions { display: flex; gap: 8px; }
-.tracker-confirm-cancel { flex: 1; background: var(--panel-3); border: none; color: var(--text); padding: 9px 0; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-body); }
-.tracker-confirm-danger { flex: 1; background: var(--accent-rust); border: none; color: #fff; padding: 9px 0; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-body); }
+.tracker-confirm-cancel { flex: 1; background: var(--panel-3); border: none; color: var(--text); padding: 9px 0; border-radius: var(--radius-ctl); font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-body); }
+.tracker-confirm-danger { flex: 1; background: var(--accent-rust); border: none; color: #fff; padding: 9px 0; border-radius: var(--radius-ctl); font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-body); }
 </style>
 </head>
 <body>
@@ -505,6 +554,15 @@ function App() {
   const [pumpRows, setPumpRows] = useState([{ name: "", sets: "", reps: "" }]);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const THEMES = ["8bit", "dark"];
+  const THEME_ICON = { "8bit": "🎮", dark: "🌙" };
+  const [theme, setTheme] = useState(() => {
+    const saved = loadJSON("vtaper_theme", "8bit");
+    return THEMES.includes(saved) ? saved : "8bit"; // migrate retired "sundso"
+  });
+
+  useEffect(() => { saveJSON("vtaper_theme", theme); }, [theme]);
+  const cycleTheme = () => setTheme((t) => THEMES[(THEMES.indexOf(t) + 1) % THEMES.length]);
 
   const loadAppData = async (tok) => {
     setWakingServer(true);
@@ -705,7 +763,7 @@ function App() {
 
   if (!token) {
     return (
-      <div className="tracker-root tracker-center">
+      <div className="tracker-root tracker-center" data-theme={theme}>
         <form className="tracker-onboard" onSubmit={handleLogin}>
           <E size={36}>🏋</E>
           <h1 className="tracker-onboard-title">V-Taper Log</h1>
@@ -722,7 +780,7 @@ function App() {
 
   if (loading || wakingServer) {
     return (
-      <div className="tracker-root tracker-center">
+      <div className="tracker-root tracker-center" data-theme={theme}>
         <div className="tracker-onboard">
           <E size={28}>🏋</E>
           <p className="tracker-onboard-sub">Connecting to the server… this can take up to a minute if it's been idle.</p>
@@ -733,7 +791,7 @@ function App() {
 
   if (!startDate) {
     return (
-      <div className="tracker-root tracker-center">
+      <div className="tracker-root tracker-center" data-theme={theme}>
         <div className="tracker-onboard">
           <E size={36}>🏋</E>
           <h1 className="tracker-onboard-title">V-Taper Log</h1>
@@ -746,11 +804,12 @@ function App() {
   }
 
   return (
-    <div className="tracker-root">
+    <div className="tracker-root" data-theme={theme}>
       <div className="tracker-header">
         <div className="tracker-header-top">
           <div className="tracker-brand"><E size={18}>🏋</E><span>V-Taper Log</span></div>
           <div style={{ display: "flex", gap: 6 }}>
+            <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={cycleTheme} title={`Theme: ${theme} — tap to switch`}><E size={19}>{THEME_ICON[theme] || "🎮"}</E></button>
             <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={exportData} title="Export backup"><E size={19}>⬇</E></button>
             <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={() => setConfirmingReset(true)} title="Reset all data"><E size={19}>↺</E></button>
             <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={() => setConfirmingLogout(true)} title="Log out"><E size={19}>⏻</E></button>
