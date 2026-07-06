@@ -23,4 +23,17 @@ async function createLog(req, res) {
   }
 }
 
-module.exports = { getLogs, createLog };
+async function deleteLog(req, res) {
+  const { id } = req.params;
+
+  try {
+    const deleted = await logsService.deleteLog(id);
+    if (!deleted) return res.status(404).json({ error: "Log not found" });
+    res.json(deleted);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to delete log" });
+  }
+}
+
+module.exports = { getLogs, createLog, deleteLog };

@@ -113,6 +113,8 @@ body { margin: 0; background: #ebecee; }
 .tracker-day-btn.active { background: var(--accent-brass); color: #fff; border-color: var(--accent-brass); font-weight: 600; }
 .tracker-card { background: var(--panel); border-radius: var(--radius-card); overflow: hidden; border: var(--border-w) solid var(--panel-3); box-shadow: var(--shadow-card); }
 .tracker-card-head { width: 100%; background: transparent; border: none; color: var(--text); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-align: left; }
+.tracker-card-head-row { cursor: default; gap: 10px; }
+.tracker-card-head-toggle { flex: 1; min-width: 0; background: transparent; border: none; color: inherit; padding: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; text-align: left; font-family: inherit; }
 .tracker-card-titlewrap { display: flex; flex-direction: column; gap: 2px; }
 .tracker-card-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 .tracker-card-sub { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -247,7 +249,7 @@ async function apiFetch(path, token, options = {}) {
 }
 
 function normalizeLog(row) {
-  return { date: row.date, dayType: row.day_type, week: row.week, phase: row.phase, exercises: row.exercises || undefined, pump: row.pump || undefined };
+  return { id: row.id, date: row.date, dayType: row.day_type, week: row.week, phase: row.phase, exercises: row.exercises || undefined, pump: row.pump || undefined };
 }
 
 function MiniLineChart({ data }) {
@@ -554,6 +556,7 @@ function App() {
   const [pumpRows, setPumpRows] = useState([{ name: "", sets: "", reps: "" }]);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [confirmingDeleteLog, setConfirmingDeleteLog] = useState(null);
   const THEMES = ["8bit", "dark"];
   const THEME_ICON = { "8bit": "🎮", dark: "🌙" };
   const [theme, setTheme] = useState(() => {
@@ -709,6 +712,18 @@ function App() {
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     } catch (err) {
       setDataError(err.message || "Couldn't save that session");
+    }
+  };
+
+  const deleteLog = async (id) => {
+    setDataError("");
+    try {
+      await apiFetch(`/api/logs/${id}`, token, { method: "DELETE" });
+      setLogs((prev) => prev.filter((l) => l.id !== id));
+    } catch (err) {
+      setDataError(err.message || "Couldn't delete that session");
+    } finally {
+      setConfirmingDeleteLog(null);
     }
   };
 
@@ -923,17 +938,31 @@ function App() {
           {liftingLogsDesc.length === 0 && <p className="tracker-empty-note">No sessions logged yet.</p>}
 
           {liftingLogsDesc.map((log, i) => {
-            const key = log.date + i;
+            const key = log.id ?? log.date + i;
             const isOpen = expandedLog === key;
             return (
               <div className="tracker-card" key={key}>
-                <button className="tracker-card-head" onClick={() => setExpandedLog(isOpen ? null : key)}>
-                  <div className="tracker-card-titlewrap">
-                    <div className="tracker-card-title">{log.dayType}</div>
-                    <div className="tracker-card-sub">{fmtDate(log.date)} · Week {log.week} · {log.phase}</div>
+                <div className="tracker-card-head tracker-card-head-row">
+                  <button className="tracker-card-head-toggle" onClick={() => setExpandedLog(isOpen ? null : key)}>
+                    <div className="tracker-card-titlewrap">
+                      <div className="tracker-card-title">{log.dayType}</div>
+                      <div className="tracker-card-sub">{fmtDate(log.date)} · Week {log.week} · {log.phase}</div>
+                    </div>
+                    <E size={16}>{isOpen ? "▴" : "▾"}</E>
+                  </button>
+                  {log.id != null && (
+                    <button className="tracker-icon-btn" onClick={() => setConfirmingDeleteLog(log.id)} title="Delete session"><E size={13}>🗑</E></button>
+                  )}
+                </div>
+                {confirmingDeleteLog === log.id && (
+                  <div className="tracker-confirm-panel" style={{ margin: "0 14px 12px" }}>
+                    <p className="tracker-confirm-text">Delete this {log.dayType} session from {fmtDate(log.date)}? This can't be undone.</p>
+                    <div className="tracker-confirm-actions">
+                      <button className="tracker-confirm-cancel" onClick={() => setConfirmingDeleteLog(null)}>Cancel</button>
+                      <button className="tracker-confirm-danger" onClick={() => deleteLog(log.id)}>Delete</button>
+                    </div>
                   </div>
-                  <E size={16}>{isOpen ? "▴" : "▾"}</E>
-                </button>
+                )}
                 {isOpen && (
                   <div className="tracker-card-body">
                     {log.pump

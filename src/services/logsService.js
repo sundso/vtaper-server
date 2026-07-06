@@ -30,4 +30,9 @@ async function deleteAllLogs() {
   await pool.query("DELETE FROM logs");
 }
 
-module.exports = { getLogs, addLog, deleteAllLogs };
+async function deleteLog(id) {
+  const result = await pool.query("DELETE FROM logs WHERE id = $1 RETURNING *", [id]);
+  return result.rows[0];
+}
+
+module.exports = { getLogs, addLog, deleteAllLogs, deleteLog };
