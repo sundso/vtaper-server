@@ -212,6 +212,28 @@ const PROGRAM = {
 const DAY_ORDER = ["Upper A", "Lower A", "Upper B", "Lower B"];
 const PUMP_PRESETS = ["Band Pull-Aparts", "Light Face Pulls", "Light Cable Lateral Raise", "Light Lat Pulldown", "Easy Incline Walk"];
 
+// Each exercise's `alt` text becomes one or more selectable substitute exercises
+// ("/" separates distinct options). Every main + alt gets a stable id so weight/reps
+// history is tracked per-variant instead of always collapsing into the main exercise.
+const customVariantId = (mainId) => `${mainId}__custom`;
+
+const ALT_OPTIONS = {};
+const EXERCISE_LOOKUP = {};
+Object.values(PROGRAM).forEach((list) => list.forEach((ex) => {
+  EXERCISE_LOOKUP[ex.id] = { name: ex.name, mainId: ex.id };
+  const alts = ex.alt
+    ? ex.alt.split("/").map((s) => s.trim()).filter(Boolean).map((name, i) => ({ id: `${ex.id}__alt${i}`, name }))
+    : [];
+  ALT_OPTIONS[ex.id] = alts;
+  alts.forEach((a) => { EXERCISE_LOOKUP[a.id] = { name: a.name, mainId: ex.id }; });
+}));
+
+function resolveExerciseName(id, namesMap) {
+  if (EXERCISE_LOOKUP[id]) return EXERCISE_LOOKUP[id].name;
+  if (namesMap && namesMap[id]) return namesMap[id];
+  return id;
+}
+
 function getPhaseInfo(week) {
   if (week <= 4) return { name: "Foundation", rpe: "6-7", desc: "Learn the exercises, groove technique. Don't chase weight yet.", deload: false };
   if (week <= 8) return { name: "Progressive Overload", rpe: "7-8", desc: "Add reps, then weight — beat last session on something.", deload: false };
@@ -446,11 +468,13 @@ function RestTimer({ seconds, label }) {
   );
 }
 
-function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst }) {
+function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst, altOptions, selectedVariantId, onSelectVariant, customName, onCustomNameChange }) {
   const [open, setOpen] = useState(true);
   const [showRamp, setShowRamp] = useState(false);
   const extraSet = phase.name === "Volume Phase" && exercise.priority;
   const totalSets = extraSet ? exercise.sets + 1 : exercise.sets;
+  const isCustom = selectedVariantId === customVariantId(exercise.id);
+  const displayName = isCustom ? (customName || "Custom substitute") : resolveExerciseName(selectedVariantId);
 
   return (
     <div className="tracker-card">
@@ -458,7 +482,7 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst 
         <div className="tracker-card-titlewrap">
           <div className="tracker-card-title">
             {exercise.priority && <E size={13}><span style={{ color: "var(--accent-brass)" }}>★</span></E>}
-            {exercise.name}
+            {displayName}
           </div>
           <div className="tracker-card-sub">
             {exercise.target} · {totalSets}×{exercise.reps} · RPE {exercise.rpe}
@@ -472,7 +496,19 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst 
       {open && (
         <div className="tracker-card-body">
           {exercise.alt && (
-            <div className="tracker-alt-row"><E size={12}>⇄</E><span><strong>Alt:</strong> {exercise.alt}</span></div>
+            <div className="tracker-alt-row">
+              <E size={12}>⇄</E>
+              <select className="tracker-select" value={selectedVariantId} onChange={(e) => onSelectVariant(e.target.value)}>
+                <option value={exercise.id}>{exercise.name} (main)</option>
+                {altOptions.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                <option value={customVariantId(exercise.id)}>Other (type your own)</option>
+              </select>
+            </div>
+          )}
+          {exercise.alt && isCustom && (
+            <input type="text" className="tracker-input" placeholder="Type your substitute exercise"
+              value={customName} onChange={(e) => onCustomNameChange(e.target.value)}
+              style={{ marginBottom: 10 }} />
           )}
 
           {isFirst && (
@@ -504,12 +540,12 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst 
                 <input type="number" inputMode="decimal" min="0"
                   placeholder={lastSession?.[i]?.weight ? String(lastSession[i].weight) : "kg"}
                   value={values?.[i]?.weight ?? ""}
-                  onChange={(e) => onChange(exercise.id, i, "weight", e.target.value)}
+                  onChange={(e) => onChange(selectedVariantId, i, "weight", e.target.value)}
                   className="tracker-input" />
                 <input type="number" inputMode="numeric" min="0"
                   placeholder={lastSession?.[i]?.reps ? String(lastSession[i].reps) : "reps"}
                   value={values?.[i]?.reps ?? ""}
-                  onChange={(e) => onChange(exercise.id, i, "reps", e.target.value)}
+                  onChange={(e) => onChange(selectedVariantId, i, "reps", e.target.value)}
                   className="tracker-input" />
               </div>
             ))}
@@ -552,7 +588,9 @@ function App() {
   const [values, setValues] = useState({});
   const [saved, setSaved] = useState(false);
   const [expandedLog, setExpandedLog] = useState(null);
-  const [trendExercise, setTrendExercise] = useState("Cable Lateral Raise");
+  const [trendExercise, setTrendExercise] = useState("ua2");
+  const [altSelection, setAltSelection] = useState(() => loadJSON("vtaper_altSelection", {}));
+  const [customAltNames, setCustomAltNames] = useState(() => loadJSON("vtaper_customAltNames", {}));
   const [pumpRows, setPumpRows] = useState([{ name: "", sets: "", reps: "" }]);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
@@ -566,6 +604,9 @@ function App() {
 
   useEffect(() => { saveJSON("vtaper_theme", theme); }, [theme]);
   const cycleTheme = () => setTheme((t) => THEMES[(THEMES.indexOf(t) + 1) % THEMES.length]);
+
+  useEffect(() => { saveJSON("vtaper_altSelection", altSelection); }, [altSelection]);
+  useEffect(() => { saveJSON("vtaper_customAltNames", customAltNames); }, [customAltNames]);
 
   const loadAppData = async (tok) => {
     setWakingServer(true);
@@ -658,15 +699,29 @@ function App() {
   };
 
   // Pre-fill this day's inputs with last time's numbers, so you're adjusting instead of retyping from scratch.
+  // Seeds whichever variant (main/alt/custom) is currently selected for each exercise slot.
   useEffect(() => {
     if (dayType === "Pump/Recovery" || !PROGRAM[dayType]) return;
     const seeded = {};
     PROGRAM[dayType].forEach((ex) => {
-      const last = lastSessionFor(dayType, ex.id);
-      if (last) seeded[ex.id] = last.map((s) => ({ weight: s.weight ?? "", reps: s.reps ?? "" }));
+      const vid = altSelection[ex.id] || ex.id;
+      const last = lastSessionFor(dayType, vid);
+      if (last) seeded[vid] = last.map((s) => ({ weight: s.weight ?? "", reps: s.reps ?? "" }));
     });
     setValues(seeded);
   }, [dayType, logs]);
+
+  // Switching an exercise's variant only seeds that one slot from its own history,
+  // leaving any already-typed values for other exercises untouched.
+  const selectVariant = (mainId, variantId) => {
+    setAltSelection((prev) => ({ ...prev, [mainId]: variantId }));
+    setValues((prev) => {
+      if (prev[variantId]) return prev;
+      const last = lastSessionFor(dayType, variantId);
+      if (!last) return prev;
+      return { ...prev, [variantId]: last.map((s) => ({ weight: s.weight ?? "", reps: s.reps ?? "" })) };
+    });
+  };
 
   const handleChange = (exerciseId, setIdx, field, val) => {
     const clean = stripNegative(val);
@@ -684,6 +739,16 @@ function App() {
       if (cleaned.length > 0) exercisesLogged[id] = cleaned;
     });
     if (Object.keys(exercisesLogged).length === 0) return;
+
+    // Custom substitute names aren't in the static exercise data, so stash them
+    // alongside this log entry too — otherwise other devices couldn't resolve
+    // this session's exercise names in History.
+    const names = {};
+    Object.keys(exercisesLogged).forEach((id) => {
+      if (!EXERCISE_LOOKUP[id]) names[id] = customAltNames[id.split("__")[0]] || "Custom substitute";
+    });
+    if (Object.keys(names).length > 0) exercisesLogged.__meta = { names };
+
     setDataError("");
     try {
       const row = await apiFetch("/api/logs", token, {
@@ -758,17 +823,30 @@ function App() {
     });
   };
 
-  const allExerciseNames = useMemo(() => {
-    const names = new Set();
-    Object.values(PROGRAM).forEach((list) => list.forEach((e) => names.add(e.name)));
-    return Array.from(names);
-  }, []);
+  // Trend options are keyed by variant id (not name) so a main lift and its alt(s)
+  // show up as distinct, separately-trackable entries. Custom substitutes used in
+  // past logs are pulled in too, via the __meta.names each log carries for them.
+  const trendableOptions = useMemo(() => {
+    const opts = [];
+    const seen = new Set();
+    Object.values(PROGRAM).forEach((list) => list.forEach((ex) => {
+      opts.push({ id: ex.id, name: ex.name });
+      seen.add(ex.id);
+      (ALT_OPTIONS[ex.id] || []).forEach((a) => { opts.push({ id: a.id, name: a.name }); seen.add(a.id); });
+    }));
+    logs.forEach((l) => {
+      Object.keys(l.exercises || {}).forEach((id) => {
+        if (id === "__meta" || seen.has(id)) return;
+        opts.push({ id, name: resolveExerciseName(id, l.exercises.__meta?.names) });
+        seen.add(id);
+      });
+    });
+    return opts;
+  }, [logs]);
 
   const trendData = useMemo(() => {
-    const idMatch = Object.values(PROGRAM).flat().find((e) => e.name === trendExercise);
-    if (!idMatch) return [];
-    return logs.filter((l) => l.exercises?.[idMatch.id]).map((l) => {
-      const sets = l.exercises[idMatch.id];
+    return logs.filter((l) => l.exercises?.[trendExercise]).map((l) => {
+      const sets = l.exercises[trendExercise];
       const top = Math.max(...sets.map((s) => Number(s.weight) || 0));
       return { date: fmtDate(l.date), weight: top };
     });
@@ -910,9 +988,25 @@ function App() {
               </div>
             </div>
           ) : (
-            PROGRAM[dayType].map((ex, idx) => (
-              <ExerciseCard key={ex.id} exercise={ex} phase={phase} lastSession={lastSessionFor(dayType, ex.id)} values={values[ex.id]} onChange={handleChange} isFirst={idx === 0} />
-            ))
+            PROGRAM[dayType].map((ex, idx) => {
+              const variantId = altSelection[ex.id] || ex.id;
+              return (
+                <ExerciseCard
+                  key={ex.id}
+                  exercise={ex}
+                  phase={phase}
+                  lastSession={lastSessionFor(dayType, variantId)}
+                  values={values[variantId]}
+                  onChange={handleChange}
+                  isFirst={idx === 0}
+                  altOptions={ALT_OPTIONS[ex.id] || []}
+                  selectedVariantId={variantId}
+                  onSelectVariant={(vid) => selectVariant(ex.id, vid)}
+                  customName={customAltNames[ex.id] || ""}
+                  onCustomNameChange={(text) => setCustomAltNames((prev) => ({ ...prev, [ex.id]: text }))}
+                />
+              );
+            })
           )}
 
           <button className="tracker-primary-btn tracker-save-btn" onClick={dayType === "Pump/Recovery" ? savePumpDay : saveWorkout}>
@@ -928,7 +1022,7 @@ function App() {
               <div className="tracker-trend-head">
                 <E size={14}><span style={{ color: "var(--accent-brass)" }}>📈</span></E>
                 <select className="tracker-select" value={trendExercise} onChange={(e) => setTrendExercise(e.target.value)}>
-                  {allExerciseNames.map((n) => <option key={n} value={n}>{n}</option>)}
+                  {trendableOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                 </select>
               </div>
               <MiniLineChart data={trendData} />
@@ -967,9 +1061,9 @@ function App() {
                   <div className="tracker-card-body">
                     {log.pump
                       ? log.pump.map((p, idx) => <div className="tracker-history-row" key={idx}><span>{p.name}</span><span className="tracker-mono">{p.sets}×{p.reps}</span></div>)
-                      : Object.entries(log.exercises).map(([id, sets]) => {
-                          const ex = Object.values(PROGRAM).flat().find((e) => e.id === id);
-                          return <div className="tracker-history-row" key={id}><span>{ex?.name || id}</span><span className="tracker-mono">{sets.map((s) => `${s.weight || "-"}×${s.reps || "-"}`).join("  ")}</span></div>;
+                      : Object.entries(log.exercises).filter(([id]) => id !== "__meta").map(([id, sets]) => {
+                          const name = resolveExerciseName(id, log.exercises.__meta?.names);
+                          return <div className="tracker-history-row" key={id}><span>{name}</span><span className="tracker-mono">{sets.map((s) => `${s.weight || "-"}×${s.reps || "-"}`).join("  ")}</span></div>;
                         })}
                   </div>
                 )}
