@@ -52,13 +52,6 @@ body { margin: 0; background: #000; }
   font-family: var(--font-body); box-shadow: 0 10px 24px rgba(139,127,245,0.35);
 }
 .tracker-primary-btn:disabled { opacity: 0.6; }
-.tracker-secondary-btn {
-  background: var(--panel-2); color: var(--text); font-weight: 700; border: none;
-  padding: 13px 20px; border-radius: var(--radius-pill); font-size: 13px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
-  font-family: var(--font-body);
-}
-.tracker-secondary-btn:disabled { opacity: 0.6; }
 .tracker-header { background: var(--bg); padding: 18px 18px 0; position: sticky; top: 0; z-index: 5; }
 .tracker-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .tracker-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 17px; letter-spacing: -0.2px; color: var(--text); }
@@ -970,30 +963,6 @@ function App() {
     }
   };
 
-  // Best-effort direct-to-Instagram-Story path: a website can't hand Instagram
-  // an image the way a native app can — that needs a private pasteboard key
-  // (iOS: UIPasteboard custom item, Android: a content:// URI + Intent extra)
-  // that's only reachable from native app code, never from JavaScript. So this
-  // copies the card to the system clipboard and deep-links straight into
-  // Instagram's Stories camera (instagram://story-camera works on both iOS and
-  // Android) — the closest a browser can get is one paste away, not zero-tap.
-  const shareToInstagram = async () => {
-    if (!shareCardRef.current || !window.html2canvas) return;
-    setSharing(true);
-    try {
-      const blob = await renderShareBlob();
-      try {
-        if (navigator.clipboard && window.ClipboardItem) {
-          await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-        }
-      } catch (e) {}
-      window.location.href = "instagram://story-camera";
-    } catch (err) {
-      setDataError("Couldn't open Instagram — try Share instead.");
-    } finally {
-      setSharing(false);
-    }
-  };
 
   const resetAll = async () => {
     setConfirmingReset(false);
@@ -1127,10 +1096,6 @@ function App() {
                 {sharing ? "Preparing…" : <><E size={15}>📤</E> Share</>}
               </button>
               <p className="tracker-share-hint">Opens your share sheet with the image attached — pick Instagram, then tap "Your Story."</p>
-              <button className="tracker-secondary-btn" onClick={shareToInstagram} disabled={sharing}>
-                <E size={14}>📷</E> Quick-open Instagram
-              </button>
-              <p className="tracker-share-hint">Copies the image and jumps straight to Instagram's camera — tap the screen to paste it in.</p>
             </div>
           </div>
         </div>
