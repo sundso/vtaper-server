@@ -156,6 +156,19 @@ body { margin: 0; background: #ebecee; }
 .tracker-confirm-actions { display: flex; gap: 8px; }
 .tracker-confirm-cancel { flex: 1; background: var(--panel-3); border: none; color: var(--text); padding: 9px 0; border-radius: var(--radius-ctl); font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-body); }
 .tracker-confirm-danger { flex: 1; background: var(--accent-rust); border: none; color: #fff; padding: 9px 0; border-radius: var(--radius-ctl); font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-body); }
+.tracker-toast {
+  position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%);
+  z-index: 50; display: flex; align-items: center; gap: 8px; max-width: 88%;
+  background: var(--accent-green); color: #fff; font-family: var(--font-body); font-weight: 700;
+  font-size: 13px; padding: 11px 18px; border-radius: var(--radius-pill);
+  border: var(--border-w) solid var(--text); box-shadow: var(--btn-shadow);
+  animation: tracker-toast-in 0.22s ease;
+}
+.tracker-toast span { line-height: 1.2; }
+@keyframes tracker-toast-in {
+  from { opacity: 0; transform: translate(-50%, 14px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
 </style>
 </head>
 <body>
@@ -249,6 +262,14 @@ function fmtDate(d) { return new Date(d).toLocaleDateString(undefined, { month: 
 const stripNegative = (v) => v.replace(/-/g, "");
 const loadJSON = (key, fallback) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } };
 const saveJSON = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; } };
+
+// Does a persisted workout draft actually hold anything the user typed?
+const draftHasContent = (d) => {
+  if (!d) return false;
+  if (d.values && Object.keys(d.values).length > 0) return true;
+  if (Array.isArray(d.pumpRows) && d.pumpRows.some((r) => r && r.name && r.name.trim())) return true;
+  return false;
+};
 
 const API_BASE = "https://vtaper-server.onrender.com";
 
@@ -584,14 +605,18 @@ function App() {
   const [startDate, setStartDate] = useState(null);
   const [logs, setLogs] = useState([]);
   const [tab, setTab] = useState("today");
-  const [dayType, setDayType] = useState("Upper A");
-  const [values, setValues] = useState({});
+  // Unsaved workout entry (day + typed numbers) is stashed in localStorage so a
+  // page refresh mid-session doesn't wipe what's already filled in. Cleared on save.
+  const initialDraft = useMemo(() => loadJSON("vtaper_draft", {}), []);
+  const [dayType, setDayType] = useState(initialDraft.dayType || "Upper A");
+  const [values, setValues] = useState(initialDraft.values || {});
   const [saved, setSaved] = useState(false);
+  const [toast, setToast] = useState(null);
   const [expandedLog, setExpandedLog] = useState(null);
   const [trendExercise, setTrendExercise] = useState("ua2");
   const [altSelection, setAltSelection] = useState(() => loadJSON("vtaper_altSelection", {}));
   const [customAltNames, setCustomAltNames] = useState(() => loadJSON("vtaper_customAltNames", {}));
-  const [pumpRows, setPumpRows] = useState([{ name: "", sets: "", reps: "" }]);
+  const [pumpRows, setPumpRows] = useState(initialDraft.pumpRows || [{ name: "", sets: "", reps: "" }]);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [confirmingDeleteLog, setConfirmingDeleteLog] = useState(null);
@@ -607,6 +632,11 @@ function App() {
 
   useEffect(() => { saveJSON("vtaper_altSelection", altSelection); }, [altSelection]);
   useEffect(() => { saveJSON("vtaper_customAltNames", customAltNames); }, [customAltNames]);
+
+  // Persist the in-progress entry on every change so it survives a page refresh.
+  useEffect(() => { saveJSON("vtaper_draft", { dayType, values, pumpRows }); }, [dayType, values, pumpRows]);
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
 
   const loadAppData = async (tok) => {
     setWakingServer(true);
@@ -672,13 +702,19 @@ function App() {
 
   const phase = getPhaseInfo(week);
 
+  // After each new session is logged, auto-advance to the next day in the rotation.
+  // But on the first load after a refresh, don't yank the user off a draft they were
+  // still filling in — keep the day their unsaved entry belongs to.
+  const autoAdvanceReady = useRef(false);
   useEffect(() => {
     const lifting = logs.filter((l) => DAY_ORDER.includes(l.dayType));
-    if (lifting.length > 0) {
-      const last = lifting[lifting.length - 1];
-      const idx = DAY_ORDER.indexOf(last.dayType);
-      setDayType(DAY_ORDER[(idx + 1) % DAY_ORDER.length]);
-    }
+    if (lifting.length === 0) return;
+    const keepDraftDay = !autoAdvanceReady.current && draftHasContent(initialDraft);
+    autoAdvanceReady.current = true;
+    if (keepDraftDay) return;
+    const last = lifting[lifting.length - 1];
+    const idx = DAY_ORDER.indexOf(last.dayType);
+    setDayType(DAY_ORDER[(idx + 1) % DAY_ORDER.length]);
   }, [logs.length]);
 
   const startProgram = async () => {
@@ -700,15 +736,24 @@ function App() {
 
   // Pre-fill this day's inputs with last time's numbers, so you're adjusting instead of retyping from scratch.
   // Seeds whichever variant (main/alt/custom) is currently selected for each exercise slot.
+  const prevDayRef = useRef(dayType);
   useEffect(() => {
-    if (dayType === "Pump/Recovery" || !PROGRAM[dayType]) return;
-    const seeded = {};
-    PROGRAM[dayType].forEach((ex) => {
-      const vid = altSelection[ex.id] || ex.id;
-      const last = lastSessionFor(dayType, vid);
-      if (last) seeded[vid] = last.map((s) => ({ weight: s.weight ?? "", reps: s.reps ?? "" }));
+    if (dayType === "Pump/Recovery" || !PROGRAM[dayType]) { prevDayRef.current = dayType; return; }
+    const dayChanged = prevDayRef.current !== dayType;
+    prevDayRef.current = dayType;
+    setValues((prev) => {
+      // On a genuine day switch, start clean so the previous day's numbers aren't
+      // carried over. On a refresh or when history arrives, keep whatever's already
+      // typed (the restored draft) and only pre-fill still-empty exercise slots.
+      const next = dayChanged ? {} : { ...prev };
+      PROGRAM[dayType].forEach((ex) => {
+        const vid = altSelection[ex.id] || ex.id;
+        if (next[vid] && next[vid].length) return;
+        const last = lastSessionFor(dayType, vid);
+        if (last) next[vid] = last.map((s) => ({ weight: s.weight ?? "", reps: s.reps ?? "" }));
+      });
+      return next;
     });
-    setValues(seeded);
   }, [dayType, logs]);
 
   // Switching an exercise's variant only seeds that one slot from its own history,
@@ -758,6 +803,7 @@ function App() {
       setLogs((prev) => [...prev, normalizeLog(row)]);
       setValues({});
       setSaved(true); setTimeout(() => setSaved(false), 2000);
+      showToast("Workout saved to history");
     } catch (err) {
       setDataError(err.message || "Couldn't save that workout");
     }
@@ -775,6 +821,7 @@ function App() {
       setLogs((prev) => [...prev, normalizeLog(row)]);
       setPumpRows([{ name: "", sets: "", reps: "" }]);
       setSaved(true); setTimeout(() => setSaved(false), 2000);
+      showToast("Session saved to history");
     } catch (err) {
       setDataError(err.message || "Couldn't save that session");
     }
@@ -898,6 +945,12 @@ function App() {
 
   return (
     <div className="tracker-root" data-theme={theme}>
+      {toast && (
+        <div className="tracker-toast" role="status" aria-live="polite">
+          <E size={16}>✅</E>
+          <span>{toast}</span>
+        </div>
+      )}
       <div className="tracker-header">
         <div className="tracker-header-top">
           <div className="tracker-brand"><E size={18}>🏋</E><span>V-Taper Log</span></div>
