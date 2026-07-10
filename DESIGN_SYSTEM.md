@@ -1,102 +1,52 @@
 # V-Taper Design System
 
-The app is skinned entirely through **CSS custom properties (design tokens)** declared on
-`.tracker-root` in `index.html`. Every surface reads from tokens, so switching the
-`data-theme` attribute on the root reskins the whole app — no per-component rewrites.
+The app is skinned entirely through **CSS custom properties (design tokens)** declared once
+on `.tracker-root` in `index.html`. Every surface reads from tokens — never a raw hex,
+radius, or font — so the whole app stays visually consistent as it grows.
 
-There are **two themes**: `8bit` (default) and `dark`. Adding more is a copy-paste of one
-token block (see [Adding a theme](#adding-a-theme)).
+There is a **single theme**: a dark, color-blocked look inspired by modern fitness-app UI —
+near-black canvas, bold rounded cards, a saturated purple primary, pill-shaped buttons and
+nav, and a small set of semantic accent colors instead of literal color names.
 
 ```
-.tracker-root                     ← token contract + defaults (= "8bit" theme)
-.tracker-root[data-theme="dark"]  ← self-contained override block for dark mode
+.tracker-root   ← the entire token contract + values (no data-theme switching)
 ```
-
-The active theme lives in React state (`theme`), is persisted to
-`localStorage["vtaper_theme"]`, and is applied as `data-theme={theme}` on every
-`.tracker-root`. The header button cycles through `THEMES` (`cycleTheme`) and shows the
-current theme's icon (🎮 / 🌙).
 
 ---
 
 ## Token contract
 
-Every theme MUST define all of these. Components only ever reference these names —
-never a raw hex, radius, or font.
+Components only ever reference these names — never a raw hex, radius, or font.
 
 ### Color
-| Token | Role |
-|---|---|
-| `--bg` | App canvas behind panels |
-| `--panel` | Primary surface (cards, header) |
-| `--panel-2` | Recessed surface (inputs, chips, banners) |
-| `--panel-3` | Borders + tertiary fills |
-| `--text` | Primary text / ink |
-| `--text-muted` | Secondary text, captions |
-| `--accent-brass` | **Primary** action + links + active state |
-| `--accent-green` | Success / "done" (completed sets, running→done) |
-| `--accent-rust` | Danger / destructive / deload signal |
-| `--accent-yellow` | Decorative accent (header underline stripe) |
+| Token | Value | Role |
+|---|---|---|
+| `--bg` | `#000000` | App canvas behind everything |
+| `--panel` | `#17171b` | Primary surface (cards, header) |
+| `--panel-2` | `#1f1f25` | Recessed surface (inputs, chips, tab track) |
+| `--panel-3` | `#2c2c33` | Tertiary fills, dividers |
+| `--text` | `#f5f5f7` | Primary text / ink |
+| `--text-muted` | `#8d8d96` | Secondary text, captions |
+| `--accent-primary` | `#8b7ff5` | **Primary** — active states, links, primary buttons, numbers |
+| `--accent-secondary` | `#f3a94e` | Highlight/informational — warm-up cues, "+1 set" badges |
+| `--accent-success` | `#3ecf8e` | Success / "done" (save toast, completed timer) |
+| `--accent-danger` | `#ff5c72` | Destructive / error / deload signal |
 
 ### Type
-| Token | Role |
-|---|---|
-| `--font-display` | Titles, brand, phase name |
-| `--font-body` | All UI text, buttons, labels |
-| `--font-mono` | Numbers: reps, weights, set #, timers |
-| `--title-transform` | `text-transform` for titles (`none` / `uppercase`) |
-| `--title-spacing` | `letter-spacing` for the big onboard title |
+| Token | Value | Role |
+|---|---|---|
+| `--font-display` | Manrope (700/800) | Titles, brand, phase name |
+| `--font-body` | Inter | All UI text, buttons, labels |
+| `--font-mono` | JetBrains Mono | Numbers: reps, weights, set #, timers |
 
 ### Shape
-| Token | Role |
-|---|---|
-| `--radius-card` | Cards, banners, confirm panels |
-| `--radius-ctl` | Inputs, icon buttons, selects, small controls |
-| `--radius-pill` | Primary button, day buttons, preset chips |
-| `--border-w` | Standard border width |
-| `--shadow-card` | Card elevation |
-| `--btn-shadow` | Primary-button shadow (hard offset in 8-bit) |
-| `--btn-press` | `transform` applied on `:active` (8-bit press effect) |
-
----
-
-## Theme: `8bit` (default) — Pixel Gamer
-
-Sky-blue canvas, cream panels, brown ink, arcade fonts, **zero radius**, thick borders,
-hard "pixel" offset shadows, uppercase titles, tactile press effect on buttons.
-Lives directly on `.tracker-root` (it's the default block).
-
-| Token | Value |
-|---|---|
-| bg / panel / panel-2 / panel-3 | `#86c5e0` / `#f6ecd0` / `#ece0be` / `#c9b78d` |
-| text / text-muted | `#3d2b23` / `#866b58` |
-| brass / green / rust / yellow | `#2f6f97` / `#6a8f3c` / `#d1544a` / `#f4c542` |
-| fonts | Press Start 2P (display) / Pixelify Sans (body) / VT323 (mono) |
-| radius card/ctl/pill | `0` / `0` / `0` |
-| border-w | `2px` |
-| shadow-card / btn-shadow | `3px 3px 0 var(--text)` |
-| titles | `uppercase` |
-
-> **Font note:** the reference "Pixel Gamer" font is a paid Ditatype font. These are the
-> closest free Google Fonts. Press Start 2P is tall/wide, so
-> `.tracker-root:not([data-theme="dark"])` rules shrink the arcade headings
-> (`.tracker-onboard-title`, `.tracker-brand`, `.tracker-phase-name`) and bump
-> `--font-mono` (VT323) up a couple px to stay legible.
-
-## Theme: `dark` — clean modern dark mode
-
-Self-contained: rounded corners, soft shadows, Noto Sans. Overrides the pixel defaults
-completely (color **and** shape **and** type), so nothing 8-bit leaks through.
-
-| Token | Value |
-|---|---|
-| bg / panel / panel-2 / panel-3 | `#0f1115` / `#1a1d23` / `#242832` / `#363b47` |
-| text / text-muted | `#e8eaed` / `#9aa0ac` |
-| brass / green / rust / yellow | `#4a9eff` / `#3ecf8e` / `#ff5c5c` / `#ffd34e` |
-| fonts | Noto Sans / Noto Sans Mono |
-| radius card/ctl/pill | `12px` / `6px` / `22px` |
-| border-w / shadow-card | `1px` / `0 1px 3px rgba(0,0,0,0.4)` |
-| titles | normal case |
+| Token | Value | Role |
+|---|---|---|
+| `--radius-card` | `24px` | Cards, phase banner, confirm panels |
+| `--radius-ctl` | `14px` | Inputs, selects, small controls |
+| `--radius-pill` | `999px` | Buttons, day chips, nav, badges |
+| `--border-w` | `1px` | Reserved for focus rings — most surfaces are borderless, separated by color/elevation instead |
+| `--shadow-card` | `0 10px 30px rgba(0,0,0,0.45)` | Card elevation off the black canvas |
 
 ---
 
@@ -104,22 +54,21 @@ completely (color **and** shape **and** type), so nothing 8-bit leaks through.
 
 - **Never hardcode** a color, radius, font, or border in a component. Add/consume a token.
 - **Numbers use `--font-mono`** — reps, weights, timers, set numbers. Text uses `--font-body`.
-- **`--accent-brass` = the single primary color.** Active tabs, active day, primary buttons,
-  focused inputs, chart line all use it. Don't introduce a second "primary."
-- **`--accent-rust` = destructive/warning only.** Reset, logout confirm, deload banner.
-- If a new surface needs a shape not covered, add a *new token* (e.g. `--radius-xl`) to the
-  contract and define it in **every** theme block.
+- **`--accent-primary` = the single primary color.** Active tabs, active day, primary buttons,
+  focused inputs, chart line, set numbers all use it. Don't introduce a second "primary."
+- **`--accent-secondary` = highlight, not danger.** Warm-up cues, informational badges —
+  things worth noticing but not destructive.
+- **`--accent-danger` = destructive/error only.** Reset, logout confirm, delete, login error,
+  deload banner.
+- **Cards are mostly borderless.** Distinguish surfaces with `--panel`/`--panel-2`/`--panel-3`
+  background contrast and `--shadow-card`, not borders. Reach for a tinted background
+  (e.g. `rgba(243,169,78,0.12)` for a secondary-accent card) rather than a colored border.
+- If a new surface needs a shape not covered, add a *new token* to the contract rather than
+  inlining a value — e.g. `--radius-xl` if something needs to be rounder than a card.
 
-## Adding a theme
+## Extending the palette
 
-1. Copy the `.tracker-root[data-theme="dark"]` block (it's a full, self-contained override —
-   the safest starting point) and rename to your theme id.
-2. Override every token in the [contract](#token-contract). If a font isn't already in the
-   `@import` at the top of the `<style>`, add it there.
-3. Add the id to the `THEMES` array and `THEME_ICON` map in `index.html` (`App` component).
-4. Add font-size overrides only if your display font overflows (like the 8-bit `:not([dark])`
-   rules do).
-5. Document it here with a token table.
-
-> The **default** theme is whatever sits directly on `.tracker-root`. To change the default,
-> move those token values; keep the others as `[data-theme="…"]` override blocks.
+If a feature needs another semantic color (e.g. an "info" accent), add it as
+`--accent-<role>` describing what it *means*, not what it looks like — matches
+`--accent-primary` / `--accent-secondary` / `--accent-success` / `--accent-danger`. Document
+it in the table above.
