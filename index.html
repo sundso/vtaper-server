@@ -335,41 +335,48 @@ function ShareCard({ log, bg }) {
   const statBoxStyle = { background: c.stat, borderRadius: 16, padding: "10px 14px", flex: 1 };
   const statLabelStyle = { fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: c.muted };
   const statValueStyle = { fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 600, color: c.text, marginTop: 2 };
+  // The rounded "frame" (radius + overflow:hidden + background) is a plain block
+  // div that just shrink-wraps one child — html2canvas's border-radius clipping
+  // is unreliable on an element that's *also* a flex column with auto height
+  // (it would round the top but flatten the bottom edge). Keeping the flex
+  // layout on a separate, shape-less inner div sidesteps that entirely.
   return (
-    <div style={{
-      width: 340, background: c.card, color: c.text, padding: 28, borderRadius: 28,
-      fontFamily: "'Inter', sans-serif", display: "flex", flexDirection: "column", gap: 16,
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, color: c.muted }}>
-        <span>🏋</span><span>V-Taper Log</span>
+    <div style={{ width: 340, background: c.card, borderRadius: 28, overflow: "hidden" }}>
+      <div style={{
+        padding: 28, color: c.text, fontFamily: "'Inter', sans-serif",
+        display: "flex", flexDirection: "column", gap: 16,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, color: c.muted }}>
+          <span>🏋</span><span>V-Taper Log</span>
+        </div>
+        <div>
+          <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: 24, color: c.text }}>{log.dayType}</div>
+          <div style={{ fontSize: 12, color: c.muted, marginTop: 2 }}>{fmtDate(log.date)} · Week {log.week} · {log.phase}</div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {stats.kind === "lift" ? (
+            <>
+              <div style={statBoxStyle}><div style={statLabelStyle}>Volume</div><div style={statValueStyle}>{Math.round(stats.totalVolume).toLocaleString()} kg</div></div>
+              <div style={statBoxStyle}><div style={statLabelStyle}>Sets</div><div style={statValueStyle}>{stats.totalSets}</div></div>
+              <div style={statBoxStyle}><div style={statLabelStyle}>Exercises</div><div style={statValueStyle}>{stats.exerciseCount}</div></div>
+            </>
+          ) : (
+            <>
+              <div style={statBoxStyle}><div style={statLabelStyle}>Sets</div><div style={statValueStyle}>{stats.totalSets}</div></div>
+              <div style={statBoxStyle}><div style={statLabelStyle}>Movements</div><div style={statValueStyle}>{stats.movementCount}</div></div>
+            </>
+          )}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {stats.items.map((it, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: c.text }}>{it.name}</div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: c.muted, marginTop: 1 }}>{it.detail}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize: 10, color: c.muted, textAlign: "center", marginTop: 4 }}>Generated with V-Taper Log</div>
       </div>
-      <div>
-        <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: 24, color: c.text }}>{log.dayType}</div>
-        <div style={{ fontSize: 12, color: c.muted, marginTop: 2 }}>{fmtDate(log.date)} · Week {log.week} · {log.phase}</div>
-      </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        {stats.kind === "lift" ? (
-          <>
-            <div style={statBoxStyle}><div style={statLabelStyle}>Volume</div><div style={statValueStyle}>{Math.round(stats.totalVolume).toLocaleString()} kg</div></div>
-            <div style={statBoxStyle}><div style={statLabelStyle}>Sets</div><div style={statValueStyle}>{stats.totalSets}</div></div>
-            <div style={statBoxStyle}><div style={statLabelStyle}>Exercises</div><div style={statValueStyle}>{stats.exerciseCount}</div></div>
-          </>
-        ) : (
-          <>
-            <div style={statBoxStyle}><div style={statLabelStyle}>Sets</div><div style={statValueStyle}>{stats.totalSets}</div></div>
-            <div style={statBoxStyle}><div style={statLabelStyle}>Movements</div><div style={statValueStyle}>{stats.movementCount}</div></div>
-          </>
-        )}
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {stats.items.map((it, i) => (
-          <div key={i}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: c.text }}>{it.name}</div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: c.muted, marginTop: 1 }}>{it.detail}</div>
-          </div>
-        ))}
-      </div>
-      <div style={{ fontSize: 10, color: c.muted, textAlign: "center", marginTop: 4 }}>Generated with V-Taper Log</div>
     </div>
   );
 }
@@ -913,13 +920,26 @@ function App() {
     }
   };
 
-  // Rasterizes the off-DOM ShareCard into a PNG. backgroundColor must stay null
-  // for every mode (not just transparent) — html2canvas otherwise fills the
-  // *entire* output rectangle with a solid color behind the card, which hides
-  // the card's own border-radius and makes light/dark exports look square-cornered.
+  const SHARE_CARD_RADIUS = 28;
+
+  // Rasterizes the off-DOM ShareCard into a rounded PNG. backgroundColor must
+  // stay null — html2canvas otherwise fills the *entire* output rectangle with
+  // a solid color behind the card, hiding its border-radius. html2canvas's own
+  // CSS border-radius emulation also turned out to be unreliable on the bottom
+  // edge of this intrinsic-height card (rounds the top, flattens the bottom),
+  // so instead of trusting it we let html2canvas rasterize a plain rectangle
+  // (which it does correctly) and apply the rounded-corner mask ourselves with
+  // a canvas clip — fully within our control, no upstream quirks to chase.
   const renderShareBlob = async () => {
-    const canvas = await window.html2canvas(shareCardRef.current, { backgroundColor: null, scale: 3 });
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    const raw = await window.html2canvas(shareCardRef.current, { backgroundColor: null, scale: 3 });
+    const out = document.createElement("canvas");
+    out.width = raw.width; out.height = raw.height;
+    const ctx = out.getContext("2d");
+    ctx.beginPath();
+    ctx.roundRect(0, 0, out.width, out.height, SHARE_CARD_RADIUS * 3);
+    ctx.clip();
+    ctx.drawImage(raw, 0, 0);
+    const blob = await new Promise((resolve) => out.toBlob(resolve, "image/png"));
     if (!blob) throw new Error("Couldn't generate the image");
     return blob;
   };
@@ -1103,13 +1123,14 @@ function App() {
               ))}
             </div>
             <div className="tracker-share-actions">
-              <button className="tracker-primary-btn" onClick={shareToInstagram} disabled={sharing}>
-                {sharing ? "Preparing…" : <><E size={15}>📷</E> Add to Instagram Story</>}
+              <button className="tracker-primary-btn" onClick={handleShare} disabled={sharing}>
+                {sharing ? "Preparing…" : <><E size={15}>📤</E> Share</>}
               </button>
-              <p className="tracker-share-hint">Image copied — opens Instagram's Story camera, tap the screen to paste it in.</p>
-              <button className="tracker-secondary-btn" onClick={handleShare} disabled={sharing}>
-                <E size={14}>📤</E> Share to…
+              <p className="tracker-share-hint">Opens your share sheet with the image attached — pick Instagram, then tap "Your Story."</p>
+              <button className="tracker-secondary-btn" onClick={shareToInstagram} disabled={sharing}>
+                <E size={14}>📷</E> Quick-open Instagram
               </button>
+              <p className="tracker-share-hint">Copies the image and jumps straight to Instagram's camera — tap the screen to paste it in.</p>
             </div>
           </div>
         </div>
