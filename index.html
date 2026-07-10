@@ -950,11 +950,13 @@ function App() {
     }
   };
 
-  // Best-effort direct-to-Instagram path: a website can't hand Instagram an
-  // image the way a native app can (that needs a private pasteboard key only
-  // native code can set), so this copies the card to the system clipboard and
-  // deep-links straight into Instagram's Stories camera — one paste away.
-  // iOS only has the instagram-stories:// scheme; Android just opens the app.
+  // Best-effort direct-to-Instagram-Story path: a website can't hand Instagram
+  // an image the way a native app can — that needs a private pasteboard key
+  // (iOS: UIPasteboard custom item, Android: a content:// URI + Intent extra)
+  // that's only reachable from native app code, never from JavaScript. So this
+  // copies the card to the system clipboard and deep-links straight into
+  // Instagram's Stories camera (instagram://story-camera works on both iOS and
+  // Android) — the closest a browser can get is one paste away, not zero-tap.
   const shareToInstagram = async () => {
     if (!shareCardRef.current || !window.html2canvas) return;
     setSharing(true);
@@ -965,8 +967,7 @@ function App() {
           await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
         }
       } catch (e) {}
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      window.location.href = isIOS ? "instagram-stories://share" : "https://www.instagram.com/";
+      window.location.href = "instagram://story-camera";
     } catch (err) {
       setDataError("Couldn't open Instagram — try Share instead.");
     } finally {
@@ -1103,9 +1104,9 @@ function App() {
             </div>
             <div className="tracker-share-actions">
               <button className="tracker-primary-btn" onClick={shareToInstagram} disabled={sharing}>
-                {sharing ? "Preparing…" : <><E size={15}>📷</E> Open Instagram</>}
+                {sharing ? "Preparing…" : <><E size={15}>📷</E> Add to Instagram Story</>}
               </button>
-              <p className="tracker-share-hint">Copies the image, then opens Instagram — paste it into your Story.</p>
+              <p className="tracker-share-hint">Image copied — opens Instagram's Story camera, tap the screen to paste it in.</p>
               <button className="tracker-secondary-btn" onClick={handleShare} disabled={sharing}>
                 <E size={14}>📤</E> Share to…
               </button>
