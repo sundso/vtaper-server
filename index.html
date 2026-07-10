@@ -134,6 +134,35 @@ body { margin: 0; background: #000; }
   from { opacity: 0; transform: translate(-50%, 14px); }
   to { opacity: 1; transform: translate(-50%, 0); }
 }
+.tracker-share-overlay {
+  position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.6);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: tracker-share-fade 0.18s ease;
+}
+@keyframes tracker-share-fade { from { opacity: 0; } to { opacity: 1; } }
+.tracker-share-sheet {
+  width: 100%; max-width: 480px; background: var(--panel); border-radius: 28px 28px 0 0;
+  padding: 18px 18px 26px; display: flex; flex-direction: column; align-items: center; gap: 16px;
+  animation: tracker-share-up 0.22s ease;
+}
+@keyframes tracker-share-up { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.tracker-share-sheet-head { width: 100%; display: flex; align-items: center; justify-content: space-between; font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+.tracker-share-preview-wrap { border-radius: 20px; padding: 16px; display: flex; justify-content: center; max-height: 55vh; overflow-y: auto; }
+.tracker-share-preview-light { background: #e8e8ec; }
+.tracker-share-preview-dark { background: #000; }
+.tracker-share-preview-transparent {
+  background-image: repeating-conic-gradient(#2c2c33 0% 25%, #17171b 0% 50%);
+  background-size: 16px 16px;
+}
+.tracker-share-bg-row { display: flex; gap: 18px; }
+.tracker-share-swatch { width: 34px; height: 34px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; box-shadow: inset 0 0 0 1px var(--panel-3); }
+.tracker-share-swatch.active { border-color: var(--accent-primary); }
+.tracker-share-swatch-light { background: #ffffff; }
+.tracker-share-swatch-dark { background: #111114; }
+.tracker-share-swatch-transparent {
+  background-image: repeating-conic-gradient(#c9c9d1 0% 25%, #f2f2f4 0% 50%);
+  background-size: 10px 10px;
+}
 </style>
 </head>
 <body>
@@ -142,6 +171,7 @@ body { margin: 0; background: #000; }
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useRef, useMemo } = React;
@@ -258,6 +288,81 @@ async function apiFetch(path, token, options = {}) {
 
 function normalizeLog(row) {
   return { id: row.id, date: row.date, dayType: row.day_type, week: row.week, phase: row.phase, exercises: row.exercises || undefined, pump: row.pump || undefined };
+}
+
+// Reduces a log into the numbers + exercise breakdown the share card shows.
+// Pump/Recovery sessions don't track weight, so they get a sets/movements
+// summary instead of a volume figure.
+function computeLogStats(log) {
+  if (log.pump) {
+    const totalSets = log.pump.reduce((sum, r) => sum + (Number(r.sets) || 0), 0);
+    return {
+      kind: "pump", totalSets, movementCount: log.pump.length,
+      items: log.pump.map((r) => ({ name: r.name, detail: `${r.sets || "-"} × ${r.reps || "-"}` })),
+    };
+  }
+  const entries = Object.entries(log.exercises || {}).filter(([id]) => id !== "__meta");
+  let totalVolume = 0, totalSets = 0;
+  const items = entries.map(([id, sets]) => {
+    totalSets += sets.length;
+    totalVolume += sets.reduce((s, st) => s + (Number(st.weight) || 0) * (Number(st.reps) || 0), 0);
+    return { name: resolveExerciseName(id, log.exercises.__meta?.names), detail: sets.map((s) => `${s.weight || "-"}×${s.reps || "-"}`).join(" · ") };
+  });
+  return { kind: "lift", totalVolume, totalSets, exerciseCount: items.length, items };
+}
+
+// Standalone light/dark/transparent looks for the exported share image —
+// independent of the app's own (single, dark) theme, since this is an
+// artifact the user posts externally and needs to read on any background.
+const SHARE_BG = {
+  light: { card: "#ffffff", text: "#14141a", muted: "#6b6b75", stat: "#f2f2f4", accent: "#6f5fe0" },
+  dark: { card: "#111114", text: "#f5f5f7", muted: "#9a9aa3", stat: "#1f1f26", accent: "#8b7ff5" },
+  transparent: { card: "transparent", text: "#f5f5f7", muted: "#c9c9d1", stat: "rgba(255,255,255,0.10)", accent: "#8b7ff5" },
+};
+
+function ShareCard({ log, bg }) {
+  const c = SHARE_BG[bg];
+  const stats = computeLogStats(log);
+  const statBoxStyle = { background: c.stat, borderRadius: 16, padding: "10px 14px", flex: 1 };
+  const statLabelStyle = { fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: c.muted };
+  const statValueStyle = { fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 600, color: c.text, marginTop: 2 };
+  return (
+    <div style={{
+      width: 340, background: c.card, color: c.text, padding: 28, borderRadius: 28,
+      fontFamily: "'Inter', sans-serif", display: "flex", flexDirection: "column", gap: 16,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, color: c.muted }}>
+        <span>🏋</span><span>V-Taper Log</span>
+      </div>
+      <div>
+        <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: 24, color: c.text }}>{log.dayType}</div>
+        <div style={{ fontSize: 12, color: c.muted, marginTop: 2 }}>{fmtDate(log.date)} · Week {log.week} · {log.phase}</div>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        {stats.kind === "lift" ? (
+          <>
+            <div style={statBoxStyle}><div style={statLabelStyle}>Volume</div><div style={statValueStyle}>{Math.round(stats.totalVolume).toLocaleString()} kg</div></div>
+            <div style={statBoxStyle}><div style={statLabelStyle}>Sets</div><div style={statValueStyle}>{stats.totalSets}</div></div>
+            <div style={statBoxStyle}><div style={statLabelStyle}>Exercises</div><div style={statValueStyle}>{stats.exerciseCount}</div></div>
+          </>
+        ) : (
+          <>
+            <div style={statBoxStyle}><div style={statLabelStyle}>Sets</div><div style={statValueStyle}>{stats.totalSets}</div></div>
+            <div style={statBoxStyle}><div style={statLabelStyle}>Movements</div><div style={statValueStyle}>{stats.movementCount}</div></div>
+          </>
+        )}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {stats.items.map((it, i) => (
+          <div key={i}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: c.text }}>{it.name}</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: c.muted, marginTop: 1 }}>{it.detail}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize: 10, color: c.muted, textAlign: "center", marginTop: 4 }}>Generated with V-Taper Log</div>
+    </div>
+  );
 }
 
 function MiniLineChart({ data }) {
@@ -585,6 +690,10 @@ function App() {
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [confirmingDeleteLog, setConfirmingDeleteLog] = useState(null);
+  const [sharingLog, setSharingLog] = useState(null);
+  const [shareBg, setShareBg] = useState("dark");
+  const [sharing, setSharing] = useState(false);
+  const shareCardRef = useRef(null);
 
   useEffect(() => { saveJSON("vtaper_altSelection", altSelection); }, [altSelection]);
   useEffect(() => { saveJSON("vtaper_customAltNames", customAltNames); }, [customAltNames]);
@@ -795,6 +904,38 @@ function App() {
     }
   };
 
+  // Rasterizes the off-DOM ShareCard into a PNG and hands it to the native share
+  // sheet (Instagram, Messages, etc. on mobile) with a same-tab download fallback
+  // for browsers without file-sharing support.
+  const handleShare = async () => {
+    if (!shareCardRef.current || !window.html2canvas) return;
+    setSharing(true);
+    try {
+      const canvas = await window.html2canvas(shareCardRef.current, {
+        backgroundColor: shareBg === "transparent" ? null : undefined,
+        scale: 3,
+      });
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error("Couldn't generate the image");
+      const fileName = `vtaper-${sharingLog.dayType.replace(/\W+/g, "-").toLowerCase()}-${sharingLog.date.slice(0, 10)}.png`;
+      const file = new File([blob], fileName, { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "V-Taper Log", text: `${sharingLog.dayType} workout logged with V-Taper Log 💪` });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+      setSharingLog(null);
+    } catch (err) {
+      if (err.name !== "AbortError") setDataError("Couldn't share that workout — try again.");
+    } finally {
+      setSharing(false);
+    }
+  };
+
   const resetAll = async () => {
     setConfirmingReset(false);
     setDataError("");
@@ -905,6 +1046,27 @@ function App() {
         <div className="tracker-toast" role="status" aria-live="polite">
           <E size={16}>✅</E>
           <span>{toast}</span>
+        </div>
+      )}
+      {sharingLog && (
+        <div className="tracker-share-overlay" onClick={() => !sharing && setSharingLog(null)}>
+          <div className="tracker-share-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="tracker-share-sheet-head">
+              <span>Share workout</span>
+              <button className="tracker-icon-btn" onClick={() => setSharingLog(null)}><E size={13}>✕</E></button>
+            </div>
+            <div className={`tracker-share-preview-wrap tracker-share-preview-${shareBg}`}>
+              <div ref={shareCardRef}><ShareCard log={sharingLog} bg={shareBg} /></div>
+            </div>
+            <div className="tracker-share-bg-row">
+              {["light", "dark", "transparent"].map((b) => (
+                <button key={b} className={`tracker-share-swatch tracker-share-swatch-${b} ${shareBg === b ? "active" : ""}`} onClick={() => setShareBg(b)} title={b} />
+              ))}
+            </div>
+            <button className="tracker-primary-btn" onClick={handleShare} disabled={sharing}>
+              {sharing ? "Preparing…" : <><E size={15}>📤</E> Share</>}
+            </button>
+          </div>
         </div>
       )}
       <div className="tracker-header">
@@ -1053,7 +1215,10 @@ function App() {
                     <E size={16}>{isOpen ? "▴" : "▾"}</E>
                   </button>
                   {log.id != null && (
-                    <button className="tracker-icon-btn" onClick={() => setConfirmingDeleteLog(log.id)} title="Delete session"><E size={13}>🗑</E></button>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button className="tracker-icon-btn" onClick={() => { setShareBg("dark"); setSharingLog(log); }} title="Share session"><E size={13}>📤</E></button>
+                      <button className="tracker-icon-btn" onClick={() => setConfirmingDeleteLog(log.id)} title="Delete session"><E size={13}>🗑</E></button>
+                    </div>
                   )}
                 </div>
                 {confirmingDeleteLog === log.id && (
