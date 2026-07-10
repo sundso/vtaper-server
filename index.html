@@ -52,6 +52,13 @@ body { margin: 0; background: #000; }
   font-family: var(--font-body); box-shadow: 0 10px 24px rgba(139,127,245,0.35);
 }
 .tracker-primary-btn:disabled { opacity: 0.6; }
+.tracker-secondary-btn {
+  background: var(--panel-2); color: var(--text); font-weight: 700; border: none;
+  padding: 13px 20px; border-radius: var(--radius-pill); font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+  font-family: var(--font-body);
+}
+.tracker-secondary-btn:disabled { opacity: 0.6; }
 .tracker-header { background: var(--bg); padding: 18px 18px 0; position: sticky; top: 0; z-index: 5; }
 .tracker-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .tracker-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 17px; letter-spacing: -0.2px; color: var(--text); }
@@ -163,6 +170,8 @@ body { margin: 0; background: #000; }
   background-image: repeating-conic-gradient(#c9c9d1 0% 25%, #f2f2f4 0% 50%);
   background-size: 10px 10px;
 }
+.tracker-share-actions { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.tracker-share-hint { font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.4; margin: 0; }
 </style>
 </head>
 <body>
@@ -904,19 +913,24 @@ function App() {
     }
   };
 
-  // Rasterizes the off-DOM ShareCard into a PNG and hands it to the native share
-  // sheet (Instagram, Messages, etc. on mobile) with a same-tab download fallback
-  // for browsers without file-sharing support.
+  // Rasterizes the off-DOM ShareCard into a PNG. backgroundColor must stay null
+  // for every mode (not just transparent) — html2canvas otherwise fills the
+  // *entire* output rectangle with a solid color behind the card, which hides
+  // the card's own border-radius and makes light/dark exports look square-cornered.
+  const renderShareBlob = async () => {
+    const canvas = await window.html2canvas(shareCardRef.current, { backgroundColor: null, scale: 3 });
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blob) throw new Error("Couldn't generate the image");
+    return blob;
+  };
+
+  // Hands the PNG to the native share sheet (Instagram, Messages, etc. on
+  // mobile) with a same-tab download fallback for browsers without file sharing.
   const handleShare = async () => {
     if (!shareCardRef.current || !window.html2canvas) return;
     setSharing(true);
     try {
-      const canvas = await window.html2canvas(shareCardRef.current, {
-        backgroundColor: shareBg === "transparent" ? null : undefined,
-        scale: 3,
-      });
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-      if (!blob) throw new Error("Couldn't generate the image");
+      const blob = await renderShareBlob();
       const fileName = `vtaper-${sharingLog.dayType.replace(/\W+/g, "-").toLowerCase()}-${sharingLog.date.slice(0, 10)}.png`;
       const file = new File([blob], fileName, { type: "image/png" });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -931,6 +945,30 @@ function App() {
       setSharingLog(null);
     } catch (err) {
       if (err.name !== "AbortError") setDataError("Couldn't share that workout — try again.");
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  // Best-effort direct-to-Instagram path: a website can't hand Instagram an
+  // image the way a native app can (that needs a private pasteboard key only
+  // native code can set), so this copies the card to the system clipboard and
+  // deep-links straight into Instagram's Stories camera — one paste away.
+  // iOS only has the instagram-stories:// scheme; Android just opens the app.
+  const shareToInstagram = async () => {
+    if (!shareCardRef.current || !window.html2canvas) return;
+    setSharing(true);
+    try {
+      const blob = await renderShareBlob();
+      try {
+        if (navigator.clipboard && window.ClipboardItem) {
+          await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        }
+      } catch (e) {}
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      window.location.href = isIOS ? "instagram-stories://share" : "https://www.instagram.com/";
+    } catch (err) {
+      setDataError("Couldn't open Instagram — try Share instead.");
     } finally {
       setSharing(false);
     }
@@ -1063,9 +1101,15 @@ function App() {
                 <button key={b} className={`tracker-share-swatch tracker-share-swatch-${b} ${shareBg === b ? "active" : ""}`} onClick={() => setShareBg(b)} title={b} />
               ))}
             </div>
-            <button className="tracker-primary-btn" onClick={handleShare} disabled={sharing}>
-              {sharing ? "Preparing…" : <><E size={15}>📤</E> Share</>}
-            </button>
+            <div className="tracker-share-actions">
+              <button className="tracker-primary-btn" onClick={shareToInstagram} disabled={sharing}>
+                {sharing ? "Preparing…" : <><E size={15}>📷</E> Open Instagram</>}
+              </button>
+              <p className="tracker-share-hint">Copies the image, then opens Instagram — paste it into your Story.</p>
+              <button className="tracker-secondary-btn" onClick={handleShare} disabled={sharing}>
+                <E size={14}>📤</E> Share to…
+              </button>
+            </div>
           </div>
         </div>
       )}
