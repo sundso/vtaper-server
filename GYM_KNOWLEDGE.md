@@ -45,17 +45,39 @@ by then the base is already built.
 Every `PROGRAM` exercise carries `sets`, `reps`, `rpe`, `rest` (seconds, drives the rest
 timer), and `restLabel` (display string). Rough conventions used throughout:
 
-- **10-15 reps** for most compound-ish/machine work — the hypertrophy-relevant range is
-  wide (roughly 5-30 reps to failure works, per the current lifting-research consensus),
-  this app just picks a consistent band so progression is easy to track.
+- **6-8 reps, 2-2.5min rest** for true multi-joint compound lifts (Leg Press, Hack Squat,
+  Incline Press variants, Lat Pulldown, rows, Pull-Up, Romanian Deadlift). These are the
+  movements most likely to hit *systemic* fatigue (heavy breathing, elevated heart rate)
+  before the target muscle is actually mechanically fatigued — see the callout below. Lower
+  reps + heavier load + longer rest keeps effort/proximity-to-failure the same while cutting
+  the metabolic byproduct that drives that "out of breath before my muscle gives out"
+  feeling. Still a fully legitimate hypertrophy rep range, not just a strength one.
+- **10-15 reps** for single-joint-ish machine work that isn't very systemically taxing
+  (leg curl, leg extension, hip thrust) — the hypertrophy-relevant range is wide (roughly
+  5-30 reps to failure works, per the current lifting-research consensus), this band is
+  just a consistent default so progression is easy to track.
 - **12-20 reps** for smaller/isolation muscles (side delts, rear delts, calves, abs) —
-  higher reps, lighter joint stress, easier to feel the target muscle working.
-- **Rest scales with how taxing the lift is**: 90-120s for heavier compound-pattern lifts
-  (press, pulldown), 60-75s for isolation work, 45-60s for abs. Not a hard rule — the timer
-  is a floor, not a ceiling; if you need longer, take it.
+  higher reps, lighter joint stress, easier to feel the target muscle working, and these
+  essentially never hit a cardio wall before a muscular one.
+- **Rest scales with how taxing the lift is**: 2-2.5min for the compound lifts above,
+  90-120s for other compound-pattern/machine work, 60-75s for isolation work, 45-60s for
+  abs. Not a hard rule — the timer is a floor, not a ceiling; if you need longer, take it.
 - **RPE (Rate of Perceived Exertion)**: how many reps you'd have left in the tank at the
   top set. RPE 7 ≈ 3 reps left, RPE 8 ≈ 2 left, RPE 9 ≈ 1 left. The app's target RPE per
   phase (table above) is the intensity dial across the whole cycle.
+
+### Why some compounds are 6-8 reps instead of 10-15
+
+At 10-15 reps with 60-120s rest, big multi-joint lifts (leg press, squat pattern presses,
+pulldowns/rows) accumulate a lot of metabolic byproduct per set — that drives heavy
+breathing and an "out of breath" feeling that can arrive well before the target muscle is
+actually mechanically fatigued. It's a real, common pattern, not a conditioning failure —
+isolation work rarely does this because it's not systemically taxing the same way. Two
+levers fix it: **lower reps** (less time under tension per set → less metabolic byproduct)
+and **longer rest** (more full recovery before the next set) — both applied here to the
+compound lifts. If a compound movement still feels breath-limited rather than muscle-limited
+after this change, check breathing technique next (exhale on the hard part, don't hold a
+full breath through the whole set) before assuming it needs more programming changes.
 
 ## Priority exercises (★)
 
