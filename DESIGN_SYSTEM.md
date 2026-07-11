@@ -39,6 +39,35 @@ Components only ever reference these names — never a raw hex, radius, or font.
 | `--font-body` | Inter | All UI text, buttons, labels |
 | `--font-mono` | JetBrains Mono | Numbers: reps, weights, set #, timers |
 
+### Type scale
+
+A standard 8-step size scale plus 3 weights. Every `font-size`/`font-weight` in the app reads
+from one of these — never a raw `px` or numeric weight.
+
+| Token | Value | Role |
+|---|---|---|
+| `--text-2xs` | `10px` | Micro uppercase labels (set-row head, day-of-week), tiny badges |
+| `--text-xs` | `11px` | Captions — muted secondary lines, hints, timestamps |
+| `--text-sm` | `12px` | Default secondary/support text — notes, descriptions, list rows |
+| `--text-md` | `13px` | Emphasized secondary text — tab labels, alt-row labels, info titles |
+| `--text-base` | `14px` | Primary body & control text — buttons, inputs, card titles, selects |
+| `--text-lg` | `16px` | Headings — brand wordmark, sheet titles |
+| `--text-xl` | `20px` | Section titles — phase name |
+| `--text-2xl` | `26px` | Display/hero text — onboarding title |
+
+| Token | Value | Role |
+|---|---|---|
+| `--weight-semibold` | `600` | Tabs, secondary emphasis, labels |
+| `--weight-bold` | `700` | Buttons, card titles, badges |
+| `--weight-black` | `800` | Display/heading text — always paired with `--font-display` |
+
+### Spacing
+
+| Token | Value | Role |
+|---|---|---|
+| `--space-page` | `16px` | Outer/section padding — header, body, sheets, banners |
+| `--space-card` | `12px` | Internal card padding — card head/body, confirm panels |
+
 ### Shape
 | Token | Value | Role |
 |---|---|---|
@@ -52,8 +81,15 @@ Components only ever reference these names — never a raw hex, radius, or font.
 
 ## Rules of the road
 
-- **Never hardcode** a color, radius, font, or border in a component. Add/consume a token.
+- **Never hardcode** a color, radius, font, font-size, font-weight, border, or padding in a
+  component. Add/consume a token.
 - **Numbers use `--font-mono`** — reps, weights, timers, set numbers. Text uses `--font-body`.
+- **Type scale is semantic, not literal.** Pick a `--text-*` token by the role the text plays
+  (body vs. caption vs. heading), not by eyeballing a pixel size. If nothing fits, add a new
+  rung to the scale rather than inlining a size.
+- **Card padding is `--space-card` (12px), page/section padding is `--space-page` (16px).**
+  A card without a `.tracker-card-head` above its body needs `.tracker-card-body-standalone`
+  for top padding — don't inline a `paddingTop`.
 - **`--accent-primary` = the single primary color.** Active tabs, active day, primary buttons,
   focused inputs, chart line, set numbers all use it. Don't introduce a second "primary."
 - **`--accent-secondary` = highlight, not danger.** Warm-up cues, informational badges —
