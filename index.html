@@ -104,6 +104,14 @@ body { margin: 0; background: #000; }
 .tracker-set-num { font-family: var(--font-mono); color: var(--accent-primary); font-size: 13px; }
 .tracker-input { background: var(--panel-2); border: var(--border-w) solid transparent; color: var(--text); padding: 9px 10px; border-radius: var(--radius-ctl); font-size: 13px; font-family: var(--font-mono); width: 100%; }
 .tracker-input:focus { outline: none; border-color: var(--accent-primary); }
+.tracker-done-btn {
+  background: var(--accent-success); color: #fff; border: none; font-weight: 700;
+  padding: 10px 0; border-radius: var(--radius-pill); font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+  font-family: var(--font-body); margin-top: 2px;
+}
+.tracker-done-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.tracker-done-btn-undo { background: var(--panel-2); color: var(--text-muted); }
 .tracker-save-btn { position: sticky; bottom: 12px; }
 .tracker-pump-note { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
 .tracker-pump-row { display: grid; grid-template-columns: 2fr 1fr 1fr 28px; gap: 6px; align-items: center; }
@@ -568,19 +576,24 @@ function RestTimer({ seconds, label }) {
   );
 }
 
-function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst, altOptions, selectedVariantId, onSelectVariant, customName, onCustomNameChange }) {
-  const [open, setOpen] = useState(true);
+function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst, altOptions, selectedVariantId, onSelectVariant, customName, onCustomNameChange, done, onToggleDone }) {
+  // Starts collapsed if this exercise was already marked done on mount (e.g. a
+  // page refresh mid-workout) — otherwise the whole point of collapsing to focus
+  // on what's left would be undone by every reload.
+  const [open, setOpen] = useState(!done);
   const [showRamp, setShowRamp] = useState(false);
   const extraSet = phase.name === "Volume Phase" && exercise.priority;
   const totalSets = extraSet ? exercise.sets + 1 : exercise.sets;
   const isCustom = selectedVariantId === customVariantId(exercise.id);
   const displayName = isCustom ? (customName || "Custom substitute") : resolveExerciseName(selectedVariantId);
+  const hasAnyData = Array.isArray(values) && values.some((s) => s && (s.weight || s.reps));
 
   return (
-    <div className="tracker-card">
+    <div className="tracker-card" style={{ opacity: !open && done ? 0.6 : 1 }}>
       <button className="tracker-card-head" onClick={() => setOpen((o) => !o)}>
         <div className="tracker-card-titlewrap">
           <div className="tracker-card-title">
+            {done && <E size={13}><span style={{ color: "var(--accent-success)" }}>✓</span></E>}
             {exercise.priority && <E size={13}><span style={{ color: "var(--accent-primary)" }}>★</span></E>}
             {displayName}
           </div>
@@ -650,6 +663,14 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
               </div>
             ))}
           </div>
+
+          <button
+            className={`tracker-done-btn ${done ? "tracker-done-btn-undo" : ""}`}
+            disabled={!done && !hasAnyData}
+            onClick={() => { onToggleDone(); if (!done) setOpen(false); }}
+          >
+            {done ? <><E size={14}>↺</E> Mark not done</> : <><E size={14}>✓</E> Done — collapse</>}
+          </button>
         </div>
       )}
     </div>
@@ -689,6 +710,10 @@ function App() {
   const initialDraft = useMemo(() => loadJSON("vtaper_draft", {}), []);
   const [dayType, setDayType] = useState(initialDraft.dayType || "Upper A");
   const [values, setValues] = useState(initialDraft.values || {});
+  // Exercises the user has explicitly marked "done" mid-session — lets them
+  // collapse a finished exercise to focus on the next one without saving to
+  // history yet; the actual save still happens once, for the whole day, below.
+  const [doneExercises, setDoneExercises] = useState(initialDraft.doneExercises || {});
   const [saved, setSaved] = useState(false);
   const [toast, setToast] = useState(null);
   const [expandedLog, setExpandedLog] = useState(null);
@@ -708,7 +733,7 @@ function App() {
   useEffect(() => { saveJSON("vtaper_customAltNames", customAltNames); }, [customAltNames]);
 
   // Persist the in-progress entry on every change so it survives a page refresh.
-  useEffect(() => { saveJSON("vtaper_draft", { dayType, values, pumpRows }); }, [dayType, values, pumpRows]);
+  useEffect(() => { saveJSON("vtaper_draft", { dayType, values, pumpRows, doneExercises }); }, [dayType, values, pumpRows, doneExercises]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
 
@@ -828,6 +853,7 @@ function App() {
       });
       return next;
     });
+    if (dayChanged) setDoneExercises({});
   }, [dayType, logs]);
 
   // Switching an exercise's variant only seeds that one slot from its own history,
@@ -839,6 +865,14 @@ function App() {
       const last = lastSessionFor(dayType, variantId);
       if (!last) return prev;
       return { ...prev, [variantId]: last.map((s) => ({ weight: s.weight ?? "", reps: s.reps ?? "" })) };
+    });
+  };
+
+  const toggleExerciseDone = (variantId) => {
+    setDoneExercises((prev) => {
+      const next = { ...prev };
+      if (next[variantId]) delete next[variantId]; else next[variantId] = true;
+      return next;
     });
   };
 
@@ -876,6 +910,7 @@ function App() {
       });
       setLogs((prev) => [...prev, normalizeLog(row)]);
       setValues({});
+      setDoneExercises({});
       setSaved(true); setTimeout(() => setSaved(false), 2000);
       showToast("Workout saved to history");
     } catch (err) {
@@ -1205,6 +1240,8 @@ function App() {
                   onSelectVariant={(vid) => selectVariant(ex.id, vid)}
                   customName={customAltNames[ex.id] || ""}
                   onCustomNameChange={(text) => setCustomAltNames((prev) => ({ ...prev, [ex.id]: text }))}
+                  done={!!doneExercises[variantId]}
+                  onToggleDone={() => toggleExerciseDone(variantId)}
                 />
               );
             })
