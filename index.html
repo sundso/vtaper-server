@@ -60,10 +60,18 @@ body { margin: 0; background: #000; }
   border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px;
 }
 .tracker-icon-btn-lg { width: 40px; height: 40px; }
-.tracker-loader-wrap { margin-bottom: 14px; }
-.tracker-bar { display: flex; align-items: flex-end; gap: 2px; height: 24px; }
-.tracker-plate { flex: 1; border-radius: 2px 2px 0 0; }
-.tracker-loader-caption { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+.tracker-icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.tracker-weekcal { margin-bottom: 14px; }
+.tracker-weekcal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.tracker-weekcal-caption { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-align: center; flex: 1; }
+.tracker-weekcal-row { display: flex; gap: 6px; }
+.tracker-weekcal-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--panel-2); border-radius: var(--radius-pill); padding: 8px 0 10px; }
+.tracker-weekcal-dow { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.tracker-weekcal-num { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--text); }
+.tracker-weekcal-day.is-today { background: var(--accent-primary); }
+.tracker-weekcal-day.is-today .tracker-weekcal-dow, .tracker-weekcal-day.is-today .tracker-weekcal-num { color: #fff; }
+.tracker-weekcal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-success); }
+.tracker-weekcal-day.is-today .tracker-weekcal-dot { background: #fff; }
 .tracker-phase-banner { background: linear-gradient(135deg, var(--accent-primary), #6f61e8); border-radius: var(--radius-card); padding: 18px 20px; margin-bottom: 14px; box-shadow: var(--shadow-card); }
 .tracker-phase-banner.is-deload { background: linear-gradient(135deg, var(--accent-danger), #e6435c); }
 .tracker-phase-name { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: #fff; }
@@ -677,18 +685,59 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
   );
 }
 
-function WeekLoader({ week }) {
-  const cycleWeek = ((week - 1) % 24) + 1;
-  const cycleNum = Math.floor((week - 1) / 24) + 1;
+// Shows one program week as 7 real calendar days (Sun-Sat) instead of the whole
+// 24-week program squeezed into tiny bars — you can actually see *which* days
+// you trained. viewWeek is independent from the live program week so chevron
+// navigation doesn't fight the auto-computed "current week."
+function WeekCalendar({ startDate, logs, viewWeek, onChangeWeek }) {
+  const cycleLen = 24;
+  const cycleWeek = ((viewWeek - 1) % cycleLen) + 1;
+  const cycleNum = Math.floor((viewWeek - 1) / cycleLen) + 1;
+  const isDeload = cycleWeek === 9 || cycleWeek === 19;
+
+  const weekStart = useMemo(() => {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + (viewWeek - 1) * 7);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, [startDate, viewWeek]);
+
+  const logDayTypes = useMemo(() => {
+    const map = {};
+    logs.forEach((l) => { map[new Date(l.date).toDateString()] = l.dayType; });
+    return map;
+  }, [logs]);
+
+  const todayKey = new Date().toDateString();
+  const days = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+
   return (
-    <div className="tracker-loader-wrap">
-      <div className="tracker-bar">
-        {Array.from({ length: 24 }).map((_, i) => {
-          const w = i + 1, filled = w <= cycleWeek, isDeload = w === 9 || w === 19;
-          return <div key={i} className="tracker-plate" style={{ background: filled ? (isDeload ? "var(--accent-danger)" : "var(--accent-primary)") : "var(--panel-3)", height: isDeload ? "22px" : "16px", opacity: filled ? 1 : 0.5 }} title={`Week ${w}${isDeload ? " (deload)" : ""}`} />;
+    <div className="tracker-weekcal">
+      <div className="tracker-weekcal-head">
+        <button className="tracker-icon-btn" onClick={() => onChangeWeek(viewWeek - 1)} disabled={viewWeek <= 1} title="Previous week"><E size={14}>‹</E></button>
+        <div className="tracker-weekcal-caption">
+          Week {cycleWeek} of {cycleLen}{cycleNum > 1 ? ` · Cycle ${cycleNum}` : ""}{isDeload ? " · Deload" : ""}
+        </div>
+        <button className="tracker-icon-btn" onClick={() => onChangeWeek(viewWeek + 1)} title="Next week"><E size={14}>›</E></button>
+      </div>
+      <div className="tracker-weekcal-row">
+        {days.map((d, i) => {
+          const key = d.toDateString();
+          const isToday = key === todayKey;
+          const loggedDayType = logDayTypes[key];
+          return (
+            <div key={i} className={`tracker-weekcal-day ${isToday ? "is-today" : ""}`} title={loggedDayType ? `${loggedDayType} logged` : undefined}>
+              <span className="tracker-weekcal-dow">{d.toLocaleDateString(undefined, { weekday: "narrow" })}</span>
+              <span className="tracker-weekcal-num">{d.getDate()}</span>
+              {loggedDayType && <span className="tracker-weekcal-dot" />}
+            </div>
+          );
         })}
       </div>
-      <div className="tracker-loader-caption">Week {cycleWeek} of 24{cycleNum > 1 ? ` · Cycle ${cycleNum}` : ""}</div>
     </div>
   );
 }
@@ -798,6 +847,18 @@ function App() {
     const days = Math.floor((Date.now() - new Date(startDate).getTime()) / 86400000);
     return Math.max(1, Math.floor(days / 7) + 1);
   }, [startDate]);
+
+  // What week the calendar strip is showing — separate from the live program
+  // `week` above so paging with the chevrons doesn't get yanked back. Synced to
+  // the real current week exactly once, as soon as startDate has loaded.
+  const [viewWeek, setViewWeek] = useState(1);
+  const viewWeekSynced = useRef(false);
+  useEffect(() => {
+    if (!viewWeekSynced.current && startDate) {
+      setViewWeek(week);
+      viewWeekSynced.current = true;
+    }
+  }, [week, startDate]);
 
   const phase = getPhaseInfo(week);
 
@@ -1171,7 +1232,7 @@ function App() {
           </div>
         )}
 
-        <WeekLoader week={week} />
+        <WeekCalendar startDate={startDate} logs={logs} viewWeek={viewWeek} onChangeWeek={(w) => setViewWeek(Math.max(1, w))} />
 
         <div className={`tracker-phase-banner ${phase.deload ? "is-deload" : ""}`}>
           <div className="tracker-phase-name">{phase.name}</div>
