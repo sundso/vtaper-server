@@ -15,7 +15,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 * { box-sizing: border-box; }
-body { margin: 0; background: #000; }
+body { margin: 0; background: #000; overflow-x: hidden; }
 
 /* ============================================================
    DESIGN SYSTEM — TOKEN CONTRACT
@@ -36,7 +36,7 @@ body { margin: 0; background: #000; }
   --shadow-card: 0 10px 30px rgba(0,0,0,0.45);
 
   background: var(--bg); color: var(--text); font-family: var(--font-body);
-  min-height: 100vh; max-width: 480px; margin: 0 auto; overflow-x: hidden;
+  min-height: 100vh; max-width: 480px; margin: 0 auto;
 }
 .tracker-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .tracker-emoji { line-height: 1; display: inline-block; }
@@ -81,7 +81,7 @@ body { margin: 0; background: #000; }
 .tracker-tab { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 9px 0; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: var(--radius-pill); font-family: var(--font-body); }
 .tracker-tab.active { color: #fff; background: var(--accent-primary); }
 .tracker-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
-.tracker-day-select { width: 100%; background: var(--panel-2); border: var(--border-w) solid transparent; color: var(--text); padding: 12px 14px; border-radius: var(--radius-ctl); font-size: 14px; font-weight: 700; font-family: var(--font-body); margin-bottom: 4px; }
+.tracker-day-select { width: 100%; background: var(--panel-2); border: var(--border-w) solid transparent; color: var(--text); padding: 12px 14px; border-radius: var(--radius-ctl); font-size: 14px; font-weight: 700; font-family: var(--font-body); margin: 14px 0; }
 .tracker-day-select:focus { border-color: var(--accent-primary); outline: none; }
 .tracker-card { background: var(--panel); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-card); }
 .tracker-card-head { width: 100%; background: transparent; border: none; color: var(--text); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-align: left; }
@@ -105,8 +105,8 @@ body { margin: 0; background: #000; }
 .tracker-ramp-body { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
 .tracker-ramp-step { display: flex; justify-content: space-between; font-size: 12px; }
 .tracker-ramp-note { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin: 4px 0 0; }
-.tracker-warmup-card { background: rgba(243,169,78,0.12); }
-.tracker-warmup-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.tracker-info-card { background: rgba(243,169,78,0.12); }
+.tracker-info-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
 .tracker-timer-btn { border: none; background: var(--panel-2); color: var(--text); padding: 6px 12px; border-radius: var(--radius-pill); font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
 .tracker-rest-label { font-size: 11px; color: var(--text-muted); }
 .tracker-lastsession { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
@@ -1499,25 +1499,18 @@ function App() {
           <button className={`tracker-tab ${tab === "today" ? "active" : ""}`} onClick={() => setTab("today")}>Today</button>
           <button className={`tracker-tab ${tab === "history" ? "active" : ""}`} onClick={() => setTab("history")}>History</button>
         </div>
-      </div>
 
-      {tab === "today" && (
-        <div className="tracker-body">
+        {tab === "today" && (
           <select className="tracker-day-select" value={dayType} onChange={(e) => setDayType(e.target.value)}>
             {[...DAY_ORDER, "Pump/Recovery"].map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
           </select>
+        )}
+      </div>
 
-          {dayType !== "Pump/Recovery" && (
-            <div className="tracker-card tracker-warmup-card">
-              <div className="tracker-card-body" style={{ paddingTop: 14 }}>
-                <div className="tracker-warmup-title"><E size={14}><span style={{ color: "var(--accent-secondary)" }}>🔥</span></E>General warm-up (5-8 min, before lifting)</div>
-                <p className="tracker-pump-note">5 min light cardio (bike/rower) · dynamic mobility — arm circles, band pull-aparts, hip circles{dayType.startsWith("Lower") ? ", leg swings" : ""}. Then ramp-up sets on the first exercise below.</p>
-              </div>
-            </div>
-          )}
-
+      {tab === "today" && (
+        <div className="tracker-body">
           {dayType === "Pump/Recovery" ? (
             <div className="tracker-card">
               <div className="tracker-card-body" style={{ paddingTop: 14 }}>
@@ -1542,34 +1535,48 @@ function App() {
           ) : (
             PROGRAM[dayType].map((ex, idx) => {
               const variantId = altSelection[ex.id] || ex.id;
+              const done = !!doneExercises[variantId];
+              const isLast = idx === PROGRAM[dayType].length - 1;
+              const isCustom = variantId === customVariantId(ex.id);
+              const customType = customAltTypes[ex.id];
+              const effective = (isCustom && customType && TYPE_DEFAULTS[customType]) ? TYPE_DEFAULTS[customType] : ex;
               return (
-                <ExerciseCard
-                  key={ex.id}
-                  exercise={ex}
-                  phase={phase}
-                  lastSession={lastSessionFor(dayType, variantId)}
-                  values={values[variantId]}
-                  onChange={handleChange}
-                  isFirst={idx === 0}
-                  isCurrent={idx === firstUndoneIdx}
-                  altOptions={ALT_OPTIONS[ex.id] || []}
-                  selectedVariantId={variantId}
-                  onSelectVariant={(vid) => selectVariant(ex.id, vid)}
-                  customName={customAltNames[ex.id] || ""}
-                  onCustomNameChange={(text) => {
-                    setCustomAltNames((prev) => ({ ...prev, [ex.id]: text }));
-                    // Free-typed text has an unknown type — drop any stale type from a
-                    // previous library pick so it doesn't get misapplied to this name.
-                    setCustomAltTypes((prev) => { const next = { ...prev }; delete next[ex.id]; return next; });
-                  }}
-                  customType={customAltTypes[ex.id]}
-                  onCustomPick={(name, type) => {
-                    setCustomAltNames((prev) => ({ ...prev, [ex.id]: name }));
-                    setCustomAltTypes((prev) => ({ ...prev, [ex.id]: type }));
-                  }}
-                  done={!!doneExercises[variantId]}
-                  onToggleDone={() => toggleExerciseDone(variantId)}
-                />
+                <React.Fragment key={ex.id}>
+                  <ExerciseCard
+                    exercise={ex}
+                    phase={phase}
+                    lastSession={lastSessionFor(dayType, variantId)}
+                    values={values[variantId]}
+                    onChange={handleChange}
+                    isFirst={idx === 0}
+                    isCurrent={idx === firstUndoneIdx}
+                    altOptions={ALT_OPTIONS[ex.id] || []}
+                    selectedVariantId={variantId}
+                    onSelectVariant={(vid) => selectVariant(ex.id, vid)}
+                    customName={customAltNames[ex.id] || ""}
+                    onCustomNameChange={(text) => {
+                      setCustomAltNames((prev) => ({ ...prev, [ex.id]: text }));
+                      // Free-typed text has an unknown type — drop any stale type from a
+                      // previous library pick so it doesn't get misapplied to this name.
+                      setCustomAltTypes((prev) => { const next = { ...prev }; delete next[ex.id]; return next; });
+                    }}
+                    customType={customType}
+                    onCustomPick={(name, type) => {
+                      setCustomAltNames((prev) => ({ ...prev, [ex.id]: name }));
+                      setCustomAltTypes((prev) => ({ ...prev, [ex.id]: type }));
+                    }}
+                    done={done}
+                    onToggleDone={() => toggleExerciseDone(variantId)}
+                  />
+                  {done && !isLast && (
+                    <div className="tracker-card tracker-info-card">
+                      <div className="tracker-card-body" style={{ paddingTop: 14 }}>
+                        <div className="tracker-info-title"><E size={14}><span style={{ color: "var(--accent-secondary)" }}>⏱</span></E>Rest before next exercise</div>
+                        <RestTimer seconds={effective.rest} label={effective.restLabel} />
+                      </div>
+                    </div>
+                  )}
+                </React.Fragment>
               );
             })
           )}
