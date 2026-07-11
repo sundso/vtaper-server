@@ -790,11 +790,14 @@ function MuscleGroupPicker({ muscleGroup, onSelect, onClose }) {
   );
 }
 
-function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst, altOptions, selectedVariantId, onSelectVariant, customName, onCustomNameChange, customType, onCustomPick, done, onToggleDone }) {
-  // Starts collapsed if this exercise was already marked done on mount (e.g. a
-  // page refresh mid-workout) — otherwise the whole point of collapsing to focus
-  // on what's left would be undone by every reload.
-  const [open, setOpen] = useState(!done);
+function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst, altOptions, selectedVariantId, onSelectVariant, customName, onCustomNameChange, customType, onCustomPick, done, onToggleDone, isCurrent }) {
+  // Only the current (first not-yet-done) exercise in the day starts open — everything
+  // else starts collapsed, so a long day reads as a focused one-at-a-time list instead of
+  // a wall of open input forms. Whenever this card *becomes* the current one (the previous
+  // exercise just got marked done), it auto-expands — see the effect below. Manually
+  // opening/closing after that always wins; the effect only fires on that transition.
+  const [open, setOpen] = useState(isCurrent);
+  useEffect(() => { if (isCurrent) setOpen(true); }, [isCurrent]);
   const [showRamp, setShowRamp] = useState(false);
   const [browsingLibrary, setBrowsingLibrary] = useState(false);
   const extraSet = phase.name === "Volume Phase" && exercise.priority;
@@ -1533,6 +1536,11 @@ function App() {
           ) : (
             PROGRAM[dayType].map((ex, idx) => {
               const variantId = altSelection[ex.id] || ex.id;
+              // The first not-yet-done exercise in today's list is "current" — that's the
+              // one that starts open, guiding a one-at-a-time flow through the day.
+              const isCurrent = idx === PROGRAM[dayType].findIndex(
+                (e) => !doneExercises[altSelection[e.id] || e.id]
+              );
               return (
                 <ExerciseCard
                   key={ex.id}
@@ -1542,6 +1550,7 @@ function App() {
                   values={values[variantId]}
                   onChange={handleChange}
                   isFirst={idx === 0}
+                  isCurrent={isCurrent}
                   altOptions={ALT_OPTIONS[ex.id] || []}
                   selectedVariantId={variantId}
                   onSelectVariant={(vid) => selectVariant(ex.id, vid)}
