@@ -96,6 +96,12 @@ body { margin: 0; background: #000; }
 .tracker-card-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
 .tracker-alt-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
 .tracker-alt-row strong { color: var(--text); font-weight: 600; }
+.tracker-alt-row-label { flex: 1; font-size: 13px; color: var(--text); font-weight: 600; }
+.tracker-lib-list { width: 100%; max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.tracker-lib-row { width: 100%; background: var(--panel-2); border: none; border-radius: var(--radius-ctl); padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; text-align: left; font-family: var(--font-body); }
+.tracker-lib-row-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.tracker-lib-row-equip { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.tracker-lib-row-score { font-size: 12px; color: var(--accent-secondary); white-space: nowrap; }
 .tracker-ramp-wrap { background: var(--panel-2); border-radius: var(--radius-ctl); padding: 8px 10px; }
 .tracker-ramp-toggle { background: transparent; border: none; color: var(--accent-secondary); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer; width: 100%; padding: 0; font-family: var(--font-body); }
 .tracker-ramp-body { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
@@ -129,6 +135,7 @@ body { margin: 0; background: #000; }
 .tracker-trend-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .tracker-select { background: var(--panel-2); border: none; color: var(--text); padding: 8px 10px; border-radius: var(--radius-ctl); font-size: 12px; flex: 1; font-family: var(--font-body); }
 .tracker-empty-note { font-size: 12px; color: var(--text-muted); text-align: center; padding: 12px 0; }
+.tracker-week-group-head { font-family: var(--font-display); font-weight: 800; font-size: 13px; color: var(--text-muted); margin: 6px 2px 8px; text-transform: uppercase; letter-spacing: 0.4px; }
 .tracker-history-row { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid var(--panel-3); }
 .tracker-history-row:last-child { border-bottom: none; }
 .tracker-mono { font-family: var(--font-mono); color: var(--text-muted); }
@@ -237,6 +244,115 @@ const PROGRAM = {
 
 const DAY_ORDER = ["Upper A", "Lower A", "Upper B", "Lower B"];
 const PUMP_PRESETS = ["Band Pull-Aparts", "Light Face Pulls", "Light Cable Lateral Raise", "Light Lat Pulldown", "Easy Incline Walk"];
+
+// A browsable library of substitute exercises per muscle group, so swapping an
+// exercise doesn't require typing a name from scratch. `score` (1-5) is a rough,
+// general-principles guide — range of motion under load, how directly an exercise
+// loads the target muscle, how stable the resistance is through that range — not a
+// citation-backed ranking. Individual leverages/mobility change what works best for
+// any one person; treat this as a sensible default ordering, not a verdict.
+const EXERCISE_LIBRARY = {
+  "Upper chest": [
+    { name: "Incline Barbell Press", equipment: "Barbell", score: 5 },
+    { name: "Incline DB Press", equipment: "Dumbbell", score: 5 },
+    { name: "Incline Smith Press", equipment: "Smith machine", score: 4 },
+    { name: "Incline Machine Press", equipment: "Machine", score: 4 },
+    { name: "Low-to-High Cable Fly", equipment: "Cable", score: 4 },
+    { name: "Incline Pec-Deck", equipment: "Machine", score: 3 },
+    { name: "Incline DB Fly", equipment: "Dumbbell", score: 3 },
+  ],
+  "Side delts": [
+    { name: "Lean-Away Cable Lateral Raise", equipment: "Cable", score: 5 },
+    { name: "Cable Lateral Raise", equipment: "Cable", score: 5 },
+    { name: "DB Lateral Raise", equipment: "Dumbbell", score: 4 },
+    { name: "Machine Lateral Raise", equipment: "Machine", score: 4 },
+    { name: "Egyptian Lateral Raise", equipment: "Dumbbell", score: 4 },
+    { name: "Upright Row", equipment: "Cable", score: 3 },
+  ],
+  "Rear delts": [
+    { name: "Reverse Pec-Deck", equipment: "Machine", score: 5 },
+    { name: "Face Pull", equipment: "Cable", score: 5 },
+    { name: "Rear Delt Cable Fly", equipment: "Cable", score: 4 },
+    { name: "Bent-Over DB Reverse Fly", equipment: "Dumbbell", score: 4 },
+    { name: "Chest-Supported Rear Delt Row", equipment: "Dumbbell", score: 3 },
+  ],
+  "Lats": [
+    { name: "Lat Pulldown", equipment: "Cable/Machine", score: 5 },
+    { name: "Pull-Up", equipment: "Bodyweight", score: 5 },
+    { name: "Neutral-Grip Pulldown", equipment: "Cable", score: 4 },
+    { name: "Assisted Pull-Up", equipment: "Machine", score: 4 },
+    { name: "Straight-Arm Pulldown", equipment: "Cable", score: 4 },
+    { name: "Kneeling Lat Pulldown", equipment: "Cable", score: 3 },
+  ],
+  "Upper back": [
+    { name: "Chest-Supported Row", equipment: "Machine/Dumbbell", score: 5 },
+    { name: "Seated Cable Row", equipment: "Cable", score: 5 },
+    { name: "Machine Row", equipment: "Machine", score: 4 },
+    { name: "Single-Arm DB Row", equipment: "Dumbbell", score: 4 },
+    { name: "T-Bar Row", equipment: "Barbell", score: 4 },
+    { name: "Meadows Row", equipment: "Barbell", score: 3 },
+  ],
+  "Biceps": [
+    { name: "Incline DB Curl", equipment: "Dumbbell", score: 5 },
+    { name: "Preacher Curl", equipment: "Machine/Barbell", score: 5 },
+    { name: "Cable Curl", equipment: "Cable", score: 4 },
+    { name: "EZ-Bar Curl", equipment: "Barbell", score: 4 },
+    { name: "Hammer Curl", equipment: "Dumbbell", score: 3 },
+    { name: "Concentration Curl", equipment: "Dumbbell", score: 3 },
+  ],
+  "Triceps": [
+    { name: "Overhead Cable Extension", equipment: "Cable", score: 5 },
+    { name: "Triceps Pressdown", equipment: "Cable", score: 4 },
+    { name: "Close-Grip Bench Press", equipment: "Barbell", score: 4 },
+    { name: "Skull Crusher", equipment: "Barbell/EZ-Bar", score: 4 },
+    { name: "Dip", equipment: "Bodyweight", score: 4 },
+    { name: "Single-Arm Overhead DB Extension", equipment: "Dumbbell", score: 3 },
+  ],
+  "Quads": [
+    { name: "Leg Press", equipment: "Machine", score: 5 },
+    { name: "Hack Squat", equipment: "Machine", score: 5 },
+    { name: "Front Squat", equipment: "Barbell", score: 4 },
+    { name: "Leg Extension", equipment: "Machine", score: 4 },
+    { name: "Bulgarian Split Squat", equipment: "Dumbbell", score: 4 },
+    { name: "Walking Lunge", equipment: "Dumbbell", score: 3 },
+  ],
+  "Hamstrings": [
+    { name: "Romanian Deadlift", equipment: "Barbell/Dumbbell", score: 5 },
+    { name: "Seated Leg Curl", equipment: "Machine", score: 5 },
+    { name: "Lying Leg Curl", equipment: "Machine", score: 5 },
+    { name: "Nordic Curl", equipment: "Bodyweight", score: 4 },
+    { name: "Glute-Ham Raise", equipment: "Machine", score: 4 },
+    { name: "Stiff-Leg Deadlift", equipment: "Barbell", score: 4 },
+  ],
+  "Glutes": [
+    { name: "Hip Thrust", equipment: "Barbell/Machine", score: 5 },
+    { name: "Barbell Glute Bridge", equipment: "Barbell", score: 4 },
+    { name: "Cable Pull-Through", equipment: "Cable", score: 4 },
+    { name: "Bulgarian Split Squat", equipment: "Dumbbell", score: 4 },
+    { name: "Glute Kickback Machine", equipment: "Machine", score: 4 },
+    { name: "Cable Kickback", equipment: "Cable", score: 3 },
+  ],
+  "Calves": [
+    { name: "Standing Calf Raise", equipment: "Machine", score: 5 },
+    { name: "Seated Calf Raise", equipment: "Machine", score: 5 },
+    { name: "Leg Press Calf Raise", equipment: "Machine", score: 4 },
+    { name: "Single-Leg Calf Raise", equipment: "Bodyweight", score: 3 },
+  ],
+  "Core": [
+    { name: "Cable Crunch", equipment: "Cable", score: 5 },
+    { name: "Hanging Leg Raise", equipment: "Bodyweight", score: 5 },
+    { name: "Ab Wheel Rollout", equipment: "Bodyweight", score: 5 },
+    { name: "Machine Crunch", equipment: "Machine", score: 4 },
+    { name: "Pallof Press", equipment: "Cable", score: 4 },
+    { name: "Weighted Sit-Up", equipment: "Bodyweight/Dumbbell", score: 3 },
+  ],
+  "Adductors": [
+    { name: "Adductor Machine", equipment: "Machine", score: 5 },
+    { name: "Cable Adduction", equipment: "Cable", score: 4 },
+    { name: "Copenhagen Plank", equipment: "Bodyweight", score: 4 },
+    { name: "Sumo Squat", equipment: "Barbell/Dumbbell", score: 3 },
+  ],
+};
 
 // Each exercise's `alt` text becomes one or more selectable substitute exercises
 // ("/" separates distinct options). Every main + alt gets a stable id so weight/reps
@@ -584,12 +700,40 @@ function RestTimer({ seconds, label }) {
   );
 }
 
+function MuscleGroupPicker({ muscleGroup, onSelect, onClose }) {
+  const options = (EXERCISE_LIBRARY[muscleGroup] || []).slice().sort((a, b) => b.score - a.score);
+  return (
+    <div className="tracker-share-overlay" onClick={onClose}>
+      <div className="tracker-share-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="tracker-share-sheet-head">
+          <span>{muscleGroup} exercises</span>
+          <button className="tracker-icon-btn" onClick={onClose}><E size={13}>✕</E></button>
+        </div>
+        <p className="tracker-share-hint">Ranked by general training principles — range of motion, muscle activation, resistance stability. A sensible default, not a verdict on what's best for you.</p>
+        <div className="tracker-lib-list">
+          {options.map((ex) => (
+            <button key={ex.name} className="tracker-lib-row" onClick={() => onSelect(ex.name)}>
+              <div>
+                <div className="tracker-lib-row-name">{ex.name}</div>
+                <div className="tracker-lib-row-equip">{ex.equipment}</div>
+              </div>
+              <div className="tracker-lib-row-score" title={`${ex.score}/5`}>{"★".repeat(ex.score)}{"☆".repeat(5 - ex.score)}</div>
+            </button>
+          ))}
+          {options.length === 0 && <p className="tracker-empty-note">No library entries for this muscle group yet.</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst, altOptions, selectedVariantId, onSelectVariant, customName, onCustomNameChange, done, onToggleDone }) {
   // Starts collapsed if this exercise was already marked done on mount (e.g. a
   // page refresh mid-workout) — otherwise the whole point of collapsing to focus
   // on what's left would be undone by every reload.
   const [open, setOpen] = useState(!done);
   const [showRamp, setShowRamp] = useState(false);
+  const [browsingLibrary, setBrowsingLibrary] = useState(false);
   const extraSet = phase.name === "Volume Phase" && exercise.priority;
   const totalSets = extraSet ? exercise.sets + 1 : exercise.sets;
   const isCustom = selectedVariantId === customVariantId(exercise.id);
@@ -616,20 +760,34 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
 
       {open && (
         <div className="tracker-card-body">
-          {exercise.alt && (
-            <div className="tracker-alt-row">
-              <E size={12}>⇄</E>
+          <div className="tracker-alt-row">
+            <E size={12}>⇄</E>
+            {exercise.alt ? (
               <select className="tracker-select" value={selectedVariantId} onChange={(e) => onSelectVariant(e.target.value)}>
                 <option value={exercise.id}>{exercise.name} (main)</option>
                 {altOptions.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                 <option value={customVariantId(exercise.id)}>Other (type your own)</option>
               </select>
-            </div>
-          )}
-          {exercise.alt && isCustom && (
+            ) : (
+              <div className="tracker-alt-row-label">{displayName}</div>
+            )}
+            <button className="tracker-icon-btn" title={`Browse ${exercise.target} exercises`} onClick={() => setBrowsingLibrary(true)}><E size={12}>📚</E></button>
+          </div>
+          {isCustom && (
             <input type="text" className="tracker-input" placeholder="Type your substitute exercise"
               value={customName} onChange={(e) => onCustomNameChange(e.target.value)}
               style={{ marginBottom: 10 }} />
+          )}
+          {browsingLibrary && (
+            <MuscleGroupPicker
+              muscleGroup={exercise.target}
+              onClose={() => setBrowsingLibrary(false)}
+              onSelect={(name) => {
+                onSelectVariant(customVariantId(exercise.id));
+                onCustomNameChange(name);
+                setBrowsingLibrary(false);
+              }}
+            />
           )}
 
           {isFirst && (
@@ -1122,6 +1280,21 @@ function App() {
 
   const liftingLogsDesc = [...logs].reverse();
 
+  // History reads much faster grouped by program week than as one long flat
+  // list — each log already carries the week it was logged under.
+  const logsByWeek = useMemo(() => {
+    const groups = [];
+    let current = null;
+    liftingLogsDesc.forEach((log) => {
+      if (!current || current.week !== log.week) {
+        current = { week: log.week, phase: log.phase, logs: [] };
+        groups.push(current);
+      }
+      current.logs.push(log);
+    });
+    return groups;
+  }, [logs]);
+
   if (!token) {
     return (
       <div className="tracker-root tracker-center">
@@ -1330,48 +1503,53 @@ function App() {
 
           {liftingLogsDesc.length === 0 && <p className="tracker-empty-note">No sessions logged yet.</p>}
 
-          {liftingLogsDesc.map((log, i) => {
-            const key = log.id ?? log.date + i;
-            const isOpen = expandedLog === key;
-            return (
-              <div className="tracker-card" key={key}>
-                <div className="tracker-card-head tracker-card-head-row">
-                  <button className="tracker-card-head-toggle" onClick={() => setExpandedLog(isOpen ? null : key)}>
-                    <div className="tracker-card-titlewrap">
-                      <div className="tracker-card-title">{log.dayType}</div>
-                      <div className="tracker-card-sub">{fmtDate(log.date)} · Week {log.week} · {log.phase}</div>
+          {logsByWeek.map((group) => (
+            <div key={group.week}>
+              <div className="tracker-week-group-head">Week {group.week} · {group.phase}</div>
+              {group.logs.map((log, i) => {
+                const key = log.id ?? log.date + i;
+                const isOpen = expandedLog === key;
+                return (
+                  <div className="tracker-card" key={key}>
+                    <div className="tracker-card-head tracker-card-head-row">
+                      <button className="tracker-card-head-toggle" onClick={() => setExpandedLog(isOpen ? null : key)}>
+                        <div className="tracker-card-titlewrap">
+                          <div className="tracker-card-title">{log.dayType}</div>
+                          <div className="tracker-card-sub">{fmtDate(log.date)}</div>
+                        </div>
+                        <E size={16}>{isOpen ? "▴" : "▾"}</E>
+                      </button>
+                      {log.id != null && (
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button className="tracker-icon-btn" onClick={() => { setShareBg("dark"); setSharingLog(log); }} title="Share session"><E size={13}>📤</E></button>
+                          <button className="tracker-icon-btn" onClick={() => setConfirmingDeleteLog(log.id)} title="Delete session"><E size={13}>🗑</E></button>
+                        </div>
+                      )}
                     </div>
-                    <E size={16}>{isOpen ? "▴" : "▾"}</E>
-                  </button>
-                  {log.id != null && (
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button className="tracker-icon-btn" onClick={() => { setShareBg("dark"); setSharingLog(log); }} title="Share session"><E size={13}>📤</E></button>
-                      <button className="tracker-icon-btn" onClick={() => setConfirmingDeleteLog(log.id)} title="Delete session"><E size={13}>🗑</E></button>
-                    </div>
-                  )}
-                </div>
-                {confirmingDeleteLog === log.id && (
-                  <div className="tracker-confirm-panel" style={{ margin: "0 14px 12px" }}>
-                    <p className="tracker-confirm-text">Delete this {log.dayType} session from {fmtDate(log.date)}? This can't be undone.</p>
-                    <div className="tracker-confirm-actions">
-                      <button className="tracker-confirm-cancel" onClick={() => setConfirmingDeleteLog(null)}>Cancel</button>
-                      <button className="tracker-confirm-danger" onClick={() => deleteLog(log.id)}>Delete</button>
-                    </div>
+                    {confirmingDeleteLog === log.id && (
+                      <div className="tracker-confirm-panel" style={{ margin: "0 14px 12px" }}>
+                        <p className="tracker-confirm-text">Delete this {log.dayType} session from {fmtDate(log.date)}? This can't be undone.</p>
+                        <div className="tracker-confirm-actions">
+                          <button className="tracker-confirm-cancel" onClick={() => setConfirmingDeleteLog(null)}>Cancel</button>
+                          <button className="tracker-confirm-danger" onClick={() => deleteLog(log.id)}>Delete</button>
+                        </div>
+                      </div>
+                    )}
+                    {isOpen && (
+                      <div className="tracker-card-body">
+                        {log.pump
+                          ? log.pump.map((p, idx) => <div className="tracker-history-row" key={idx}><span>{p.name}</span><span className="tracker-mono">{p.sets}×{p.reps}</span></div>)
+                          : Object.entries(log.exercises).filter(([id]) => id !== "__meta").map(([id, sets]) => {
+                              const name = resolveExerciseName(id, log.exercises.__meta?.names);
+                              return <div className="tracker-history-row" key={id}><span>{name}</span><span className="tracker-mono">{sets.map((s) => `${s.weight || "-"}×${s.reps || "-"}`).join("  ")}</span></div>;
+                            })}
+                      </div>
+                    )}
                   </div>
-                )}
-                {isOpen && (
-                  <div className="tracker-card-body">
-                    {log.pump
-                      ? log.pump.map((p, idx) => <div className="tracker-history-row" key={idx}><span>{p.name}</span><span className="tracker-mono">{p.sets}×{p.reps}</span></div>)
-                      : Object.entries(log.exercises).filter(([id]) => id !== "__meta").map(([id, sets]) => {
-                          const name = resolveExerciseName(id, log.exercises.__meta?.names);
-                          return <div className="tracker-history-row" key={id}><span>{name}</span><span className="tracker-mono">{sets.map((s) => `${s.weight || "-"}×${s.reps || "-"}`).join("  ")}</span></div>;
-                        })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          ))}
         </div>
       )}
     </div>
