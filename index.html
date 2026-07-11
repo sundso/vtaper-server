@@ -95,7 +95,6 @@ body { margin: 0; background: #000; }
 .tracker-badge-ramp { background: var(--panel-3); color: var(--text-muted); }
 .tracker-card-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
 .tracker-alt-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
-.tracker-alt-row strong { color: var(--text); font-weight: 600; }
 .tracker-alt-row-label { flex: 1; font-size: 13px; color: var(--text); font-weight: 600; }
 .tracker-lib-list { width: 100%; max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
 .tracker-lib-row { width: 100%; background: var(--panel-2); border: none; border-radius: var(--radius-ctl); padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; text-align: left; font-family: var(--font-body); }
@@ -409,6 +408,9 @@ const TYPE_DEFAULTS = {
   compound: { reps: "6-8", rest: 135, restLabel: "2-2.5min" },
   isolation: { reps: "10-15", rest: 90, restLabel: "90s" },
 };
+
+// Corner radius (CSS px) for the share-card export mask — see renderShareBlob in App.
+const SHARE_CARD_RADIUS = 28;
 
 // Each exercise's `alt` text becomes one or more selectable substitute exercises
 // ("/" separates distinct options). Every main + alt gets a stable id so weight/reps
@@ -1243,8 +1245,6 @@ function App() {
     }
   };
 
-  const SHARE_CARD_RADIUS = 28;
-
   // Rasterizes the off-DOM ShareCard into a rounded PNG. backgroundColor must
   // stay null — html2canvas otherwise fills the *entire* output rectangle with
   // a solid color behind the card, hiding its border-radius. html2canvas's own
@@ -1292,7 +1292,6 @@ function App() {
       setSharing(false);
     }
   };
-
 
   const resetAll = async () => {
     setConfirmingReset(false);
@@ -1370,6 +1369,14 @@ function App() {
     });
     return groups;
   }, [logs]);
+
+  // The first not-yet-done exercise in today's list is "current" — the one that starts
+  // open, guiding a one-at-a-time flow through the day. Computed once per render rather
+  // than re-scanning the day's exercise list inside the render loop for every exercise.
+  const firstUndoneIdx = useMemo(() => {
+    if (!PROGRAM[dayType]) return -1;
+    return PROGRAM[dayType].findIndex((ex) => !doneExercises[altSelection[ex.id] || ex.id]);
+  }, [dayType, doneExercises, altSelection]);
 
   if (!token) {
     return (
@@ -1536,11 +1543,6 @@ function App() {
           ) : (
             PROGRAM[dayType].map((ex, idx) => {
               const variantId = altSelection[ex.id] || ex.id;
-              // The first not-yet-done exercise in today's list is "current" — that's the
-              // one that starts open, guiding a one-at-a-time flow through the day.
-              const isCurrent = idx === PROGRAM[dayType].findIndex(
-                (e) => !doneExercises[altSelection[e.id] || e.id]
-              );
               return (
                 <ExerciseCard
                   key={ex.id}
@@ -1550,7 +1552,7 @@ function App() {
                   values={values[variantId]}
                   onChange={handleChange}
                   isFirst={idx === 0}
-                  isCurrent={isCurrent}
+                  isCurrent={idx === firstUndoneIdx}
                   altOptions={ALT_OPTIONS[ex.id] || []}
                   selectedVariantId={variantId}
                   onSelectVariant={(vid) => selectVariant(ex.id, vid)}
