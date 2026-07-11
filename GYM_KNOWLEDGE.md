@@ -124,9 +124,22 @@ This is a **sensible default ordering, not a verdict** — individual leverages,
 history, and what you can actually feel working matter more than a static score. Say so
 explicitly in any UI that surfaces it (the picker already does).
 
+**Every library entry (and every `PROGRAM` exercise) also carries a `type`:
+`"compound"` or `"isolation"`** — the same distinction behind the 6-8 vs. 10-15 rep split
+above. Picking a library substitute uses *its* type to set the displayed rep/rest target
+(`TYPE_DEFAULTS` in `index.html`: compound → 6-8 reps / 2-2.5min, isolation → 10-15 reps /
+90s) — regardless of what the original slot's exercise was. Swap an isolation slot for a
+compound library pick and the card switches to compound guidance, and vice versa. This only
+applies to library-sourced substitutes; the curated `ALT_OPTIONS` and a free-typed custom
+name both keep the original exercise's numbers, since a typed name's type isn't known.
+
 **Adding to the library**: match the muscle-group key exactly to an existing `target`
 string in `PROGRAM` (see the table below) or it won't show up for any exercise. Keep the
-`equipment` tag short (what's needed, not a full description).
+`equipment` tag short (what's needed, not a full description), and set `type` by joint
+count — does the movement meaningfully load more than one joint (compound), or is it
+effectively isolated to one (isolation)? When in doubt, ask whether the exercise is likely
+to run into breathing/systemic fatigue before the target muscle does — that's the practical
+signal `type` is standing in for.
 
 | `target` values in use |
 |---|

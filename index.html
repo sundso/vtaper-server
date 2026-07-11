@@ -205,40 +205,40 @@ const E = ({ children, size }) => <span className="tracker-emoji" style={{ fontS
 
 const PROGRAM = {
   "Upper A": [
-    { id: "ua1", name: "Incline Machine Press", target: "Upper chest", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Incline DB press" },
-    { id: "ua2", name: "Cable Lateral Raise", target: "Side delts", sets: 4, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "8", priority: true, alt: "DB lateral raise / machine lateral raise" },
-    { id: "ua3", name: "Low-to-High Cable Fly", target: "Upper chest", sets: 3, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: true, alt: "Incline pec-deck" },
-    { id: "ua4", name: "Lat Pulldown", target: "Lats", sets: 4, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Assisted pull-up / straight-arm pulldown" },
-    { id: "ua5", name: "Chest-Supported Row", target: "Upper back", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Seated cable row / machine row" },
-    { id: "ua6", name: "Rear Delt Fly / Face Pull", target: "Rear delts", sets: 3, reps: "15-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Reverse pec-deck" },
-    { id: "ua7", name: "Biceps Curl", target: "Biceps", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: "Any curl variation" },
-    { id: "ua8", name: "Triceps Pressdown", target: "Triceps", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: "Overhead cable extension" },
+    { id: "ua1", name: "Incline Machine Press", target: "Upper chest", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Incline DB press" },
+    { id: "ua2", name: "Cable Lateral Raise", target: "Side delts", type: "isolation", sets: 4, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "8", priority: true, alt: "DB lateral raise / machine lateral raise" },
+    { id: "ua3", name: "Low-to-High Cable Fly", target: "Upper chest", type: "isolation", sets: 3, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: true, alt: "Incline pec-deck" },
+    { id: "ua4", name: "Lat Pulldown", target: "Lats", type: "compound", sets: 4, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Assisted pull-up / straight-arm pulldown" },
+    { id: "ua5", name: "Chest-Supported Row", target: "Upper back", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Seated cable row / machine row" },
+    { id: "ua6", name: "Rear Delt Fly / Face Pull", target: "Rear delts", type: "isolation", sets: 3, reps: "15-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Reverse pec-deck" },
+    { id: "ua7", name: "Biceps Curl", target: "Biceps", type: "isolation", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: "Any curl variation" },
+    { id: "ua8", name: "Triceps Pressdown", target: "Triceps", type: "isolation", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: "Overhead cable extension" },
   ],
   "Lower A": [
-    { id: "la1", name: "Leg Press", target: "Quads", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Hack squat machine" },
-    { id: "la2", name: "Seated Leg Curl", target: "Hamstrings", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Lying leg curl" },
-    { id: "la3", name: "Leg Extension", target: "Quads", sets: 3, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: false, alt: null },
-    { id: "la4", name: "Hip Thrust (machine/DB)", target: "Glutes", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Cable pull-through" },
-    { id: "la5", name: "Calf Raise (standing)", target: "Calves", sets: 3, reps: "12-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Seated calf raise" },
-    { id: "la6", name: "Abs (optional)", target: "Core", sets: 3, reps: "15", rest: 53, restLabel: "45-60s", rpe: "-", priority: false, optional: true, alt: "Any ab exercise" },
+    { id: "la1", name: "Leg Press", target: "Quads", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Hack squat machine" },
+    { id: "la2", name: "Seated Leg Curl", target: "Hamstrings", type: "isolation", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Lying leg curl" },
+    { id: "la3", name: "Leg Extension", target: "Quads", type: "isolation", sets: 3, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: false, alt: null },
+    { id: "la4", name: "Hip Thrust (machine/DB)", target: "Glutes", type: "isolation", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Cable pull-through" },
+    { id: "la5", name: "Calf Raise (standing)", target: "Calves", type: "isolation", sets: 3, reps: "12-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Seated calf raise" },
+    { id: "la6", name: "Abs (optional)", target: "Core", type: "isolation", sets: 3, reps: "15", rest: 53, restLabel: "45-60s", rpe: "-", priority: false, optional: true, alt: "Any ab exercise" },
   ],
   "Upper B": [
-    { id: "ub1", name: "Incline DB Press", target: "Upper chest", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Incline machine press" },
-    { id: "ub2", name: "DB Lateral Raise", target: "Side delts", sets: 4, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "8", priority: true, alt: "Cable or machine lateral raise" },
-    { id: "ub3", name: "Incline Smith / 2nd Angle Press", target: "Upper chest", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Low-to-high cable fly" },
-    { id: "ub4", name: "Pull-Up / Assisted Pull-Up", target: "Lats", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Lat pulldown, different grip than Upper A" },
-    { id: "ub5", name: "Single-Arm DB Row", target: "Upper back", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Chest-supported row, different angle" },
-    { id: "ub6", name: "Face Pull", target: "Rear delts", sets: 3, reps: "15-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Rear delt fly" },
-    { id: "ub7", name: "Biceps Curl (variation)", target: "Biceps", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: null },
-    { id: "ub8", name: "Triceps (overhead variation)", target: "Triceps", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: null },
+    { id: "ub1", name: "Incline DB Press", target: "Upper chest", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Incline machine press" },
+    { id: "ub2", name: "DB Lateral Raise", target: "Side delts", type: "isolation", sets: 4, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "8", priority: true, alt: "Cable or machine lateral raise" },
+    { id: "ub3", name: "Incline Smith / 2nd Angle Press", target: "Upper chest", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Low-to-high cable fly" },
+    { id: "ub4", name: "Pull-Up / Assisted Pull-Up", target: "Lats", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Lat pulldown, different grip than Upper A" },
+    { id: "ub5", name: "Single-Arm DB Row", target: "Upper back", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Chest-supported row, different angle" },
+    { id: "ub6", name: "Face Pull", target: "Rear delts", type: "isolation", sets: 3, reps: "15-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Rear delt fly" },
+    { id: "ub7", name: "Biceps Curl (variation)", target: "Biceps", type: "isolation", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: null },
+    { id: "ub8", name: "Triceps (overhead variation)", target: "Triceps", type: "isolation", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: null },
   ],
   "Lower B": [
-    { id: "lb1", name: "Hack Squat Machine", target: "Quads", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Leg press, different foot placement than Lower A" },
-    { id: "lb2", name: "Lying Leg Curl", target: "Hamstrings", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Seated leg curl" },
-    { id: "lb3", name: "DB Romanian Deadlift", target: "Hamstrings/glutes", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7", priority: false, alt: "Glute kickback machine / cable pull-through (zero hinge option)" },
-    { id: "lb4", name: "Leg Extension", target: "Quads", sets: 2, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: false, alt: null },
-    { id: "lb5", name: "Calf Raise (seated)", target: "Calves", sets: 3, reps: "12-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Standing calf raise" },
-    { id: "lb6", name: "Adductor/Abductor Machine", target: "Adductors", sets: 2, reps: "15", rest: 53, restLabel: "45-60s", rpe: "6-7", priority: false, optional: true, alt: null },
+    { id: "lb1", name: "Hack Squat Machine", target: "Quads", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Leg press, different foot placement than Lower A" },
+    { id: "lb2", name: "Lying Leg Curl", target: "Hamstrings", type: "isolation", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Seated leg curl" },
+    { id: "lb3", name: "DB Romanian Deadlift", target: "Hamstrings/glutes", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7", priority: false, alt: "Glute kickback machine / cable pull-through (zero hinge option)" },
+    { id: "lb4", name: "Leg Extension", target: "Quads", type: "isolation", sets: 2, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: false, alt: null },
+    { id: "lb5", name: "Calf Raise (seated)", target: "Calves", type: "isolation", sets: 3, reps: "12-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Standing calf raise" },
+    { id: "lb6", name: "Adductor/Abductor Machine", target: "Adductors", type: "isolation", sets: 2, reps: "15", rest: 53, restLabel: "45-60s", rpe: "6-7", priority: false, optional: true, alt: null },
   ],
 };
 
@@ -253,151 +253,161 @@ const PUMP_PRESETS = ["Band Pull-Aparts", "Light Face Pulls", "Light Cable Later
 // any one person; treat this as a sensible default ordering, not a verdict.
 const EXERCISE_LIBRARY = {
   "Upper chest": [
-    { name: "Incline Barbell Press", equipment: "Barbell", score: 5 },
-    { name: "Incline DB Press", equipment: "Dumbbell", score: 5 },
-    { name: "Incline Smith Press", equipment: "Smith machine", score: 4 },
-    { name: "Incline Machine Press", equipment: "Machine", score: 4 },
-    { name: "Incline Cable Press", equipment: "Cable", score: 4 },
-    { name: "Low-to-High Cable Fly", equipment: "Cable", score: 4 },
-    { name: "Incline Pec-Deck", equipment: "Machine", score: 3 },
-    { name: "Incline DB Fly", equipment: "Dumbbell", score: 3 },
-    { name: "Reverse-Grip Bench Press", equipment: "Barbell", score: 3 },
-    { name: "Landmine Press", equipment: "Barbell", score: 3 },
-    { name: "Single-Arm Incline Cable Press", equipment: "Cable", score: 3 },
+    { name: "Incline Barbell Press", equipment: "Barbell", score: 5, type: "compound" },
+    { name: "Incline DB Press", equipment: "Dumbbell", score: 5, type: "compound" },
+    { name: "Incline Smith Press", equipment: "Smith machine", score: 4, type: "compound" },
+    { name: "Incline Machine Press", equipment: "Machine", score: 4, type: "compound" },
+    { name: "Incline Cable Press", equipment: "Cable", score: 4, type: "compound" },
+    { name: "Low-to-High Cable Fly", equipment: "Cable", score: 4, type: "isolation" },
+    { name: "Incline Pec-Deck", equipment: "Machine", score: 3, type: "isolation" },
+    { name: "Incline DB Fly", equipment: "Dumbbell", score: 3, type: "isolation" },
+    { name: "Reverse-Grip Bench Press", equipment: "Barbell", score: 3, type: "compound" },
+    { name: "Landmine Press", equipment: "Barbell", score: 3, type: "compound" },
+    { name: "Single-Arm Incline Cable Press", equipment: "Cable", score: 3, type: "compound" },
   ],
   "Side delts": [
-    { name: "Lean-Away Cable Lateral Raise", equipment: "Cable", score: 5 },
-    { name: "Cable Lateral Raise", equipment: "Cable", score: 5 },
-    { name: "DB Lateral Raise", equipment: "Dumbbell", score: 4 },
-    { name: "Machine Lateral Raise", equipment: "Machine", score: 4 },
-    { name: "Egyptian Lateral Raise", equipment: "Dumbbell", score: 4 },
-    { name: "Behind-the-Back Cable Lateral Raise", equipment: "Cable", score: 4 },
-    { name: "Cable Y-Raise", equipment: "Cable", score: 4 },
-    { name: "Seated DB Lateral Raise", equipment: "Dumbbell", score: 4 },
-    { name: "Upright Row", equipment: "Cable", score: 3 },
-    { name: "Plate Lateral Raise", equipment: "Plate", score: 3 },
+    { name: "Lean-Away Cable Lateral Raise", equipment: "Cable", score: 5, type: "isolation" },
+    { name: "Cable Lateral Raise", equipment: "Cable", score: 5, type: "isolation" },
+    { name: "DB Lateral Raise", equipment: "Dumbbell", score: 4, type: "isolation" },
+    { name: "Machine Lateral Raise", equipment: "Machine", score: 4, type: "isolation" },
+    { name: "Egyptian Lateral Raise", equipment: "Dumbbell", score: 4, type: "isolation" },
+    { name: "Behind-the-Back Cable Lateral Raise", equipment: "Cable", score: 4, type: "isolation" },
+    { name: "Cable Y-Raise", equipment: "Cable", score: 4, type: "isolation" },
+    { name: "Seated DB Lateral Raise", equipment: "Dumbbell", score: 4, type: "isolation" },
+    { name: "Upright Row", equipment: "Cable", score: 3, type: "isolation" },
+    { name: "Plate Lateral Raise", equipment: "Plate", score: 3, type: "isolation" },
   ],
   "Rear delts": [
-    { name: "Reverse Pec-Deck", equipment: "Machine", score: 5 },
-    { name: "Face Pull", equipment: "Cable", score: 5 },
-    { name: "Rear Delt Cable Fly", equipment: "Cable", score: 4 },
-    { name: "Bent-Over DB Reverse Fly", equipment: "Dumbbell", score: 4 },
-    { name: "Incline Y-Raise", equipment: "Dumbbell", score: 4 },
-    { name: "Chest-Supported Rear Delt Row", equipment: "Dumbbell", score: 3 },
-    { name: "Machine Rear Delt Row", equipment: "Machine", score: 3 },
-    { name: "Band Pull-Apart", equipment: "Band", score: 3 },
+    { name: "Reverse Pec-Deck", equipment: "Machine", score: 5, type: "isolation" },
+    { name: "Face Pull", equipment: "Cable", score: 5, type: "isolation" },
+    { name: "Rear Delt Cable Fly", equipment: "Cable", score: 4, type: "isolation" },
+    { name: "Bent-Over DB Reverse Fly", equipment: "Dumbbell", score: 4, type: "isolation" },
+    { name: "Incline Y-Raise", equipment: "Dumbbell", score: 4, type: "isolation" },
+    { name: "Chest-Supported Rear Delt Row", equipment: "Dumbbell", score: 3, type: "isolation" },
+    { name: "Machine Rear Delt Row", equipment: "Machine", score: 3, type: "isolation" },
+    { name: "Band Pull-Apart", equipment: "Band", score: 3, type: "isolation" },
   ],
   "Lats": [
-    { name: "Lat Pulldown", equipment: "Cable/Machine", score: 5 },
-    { name: "Pull-Up", equipment: "Bodyweight", score: 5 },
-    { name: "Weighted Pull-Up", equipment: "Bodyweight/Plate", score: 5 },
-    { name: "Neutral-Grip Pulldown", equipment: "Cable", score: 4 },
-    { name: "Wide-Grip Pulldown", equipment: "Cable", score: 4 },
-    { name: "Underhand Pulldown", equipment: "Cable", score: 4 },
-    { name: "Assisted Pull-Up", equipment: "Machine", score: 4 },
-    { name: "Straight-Arm Pulldown", equipment: "Cable", score: 4 },
-    { name: "Single-Arm Lat Pulldown", equipment: "Cable", score: 4 },
-    { name: "Kneeling Lat Pulldown", equipment: "Cable", score: 3 },
+    { name: "Lat Pulldown", equipment: "Cable/Machine", score: 5, type: "compound" },
+    { name: "Pull-Up", equipment: "Bodyweight", score: 5, type: "compound" },
+    { name: "Weighted Pull-Up", equipment: "Bodyweight/Plate", score: 5, type: "compound" },
+    { name: "Neutral-Grip Pulldown", equipment: "Cable", score: 4, type: "compound" },
+    { name: "Wide-Grip Pulldown", equipment: "Cable", score: 4, type: "compound" },
+    { name: "Underhand Pulldown", equipment: "Cable", score: 4, type: "compound" },
+    { name: "Assisted Pull-Up", equipment: "Machine", score: 4, type: "compound" },
+    { name: "Straight-Arm Pulldown", equipment: "Cable", score: 4, type: "isolation" },
+    { name: "Single-Arm Lat Pulldown", equipment: "Cable", score: 4, type: "compound" },
+    { name: "Kneeling Lat Pulldown", equipment: "Cable", score: 3, type: "compound" },
   ],
   "Upper back": [
-    { name: "Chest-Supported Row", equipment: "Machine/Dumbbell", score: 5 },
-    { name: "Seated Cable Row", equipment: "Cable", score: 5 },
-    { name: "Pendlay Row", equipment: "Barbell", score: 4 },
-    { name: "Machine Row", equipment: "Machine", score: 4 },
-    { name: "Single-Arm DB Row", equipment: "Dumbbell", score: 4 },
-    { name: "T-Bar Row", equipment: "Barbell", score: 4 },
-    { name: "Seal Row", equipment: "Barbell", score: 4 },
-    { name: "Inverted Row", equipment: "Bodyweight", score: 4 },
-    { name: "Meadows Row", equipment: "Barbell", score: 3 },
-    { name: "Cable High Row", equipment: "Cable", score: 3 },
+    { name: "Chest-Supported Row", equipment: "Machine/Dumbbell", score: 5, type: "compound" },
+    { name: "Seated Cable Row", equipment: "Cable", score: 5, type: "compound" },
+    { name: "Pendlay Row", equipment: "Barbell", score: 4, type: "compound" },
+    { name: "Machine Row", equipment: "Machine", score: 4, type: "compound" },
+    { name: "Single-Arm DB Row", equipment: "Dumbbell", score: 4, type: "compound" },
+    { name: "T-Bar Row", equipment: "Barbell", score: 4, type: "compound" },
+    { name: "Seal Row", equipment: "Barbell", score: 4, type: "compound" },
+    { name: "Inverted Row", equipment: "Bodyweight", score: 4, type: "compound" },
+    { name: "Meadows Row", equipment: "Barbell", score: 3, type: "compound" },
+    { name: "Cable High Row", equipment: "Cable", score: 3, type: "compound" },
   ],
   "Biceps": [
-    { name: "Incline DB Curl", equipment: "Dumbbell", score: 5 },
-    { name: "Preacher Curl", equipment: "Machine/Barbell", score: 5 },
-    { name: "Spider Curl", equipment: "Dumbbell/EZ-Bar", score: 5 },
-    { name: "Bayesian Cable Curl", equipment: "Cable", score: 5 },
-    { name: "Cable Curl", equipment: "Cable", score: 4 },
-    { name: "EZ-Bar Curl", equipment: "Barbell", score: 4 },
-    { name: "Hammer Curl", equipment: "Dumbbell", score: 3 },
-    { name: "Concentration Curl", equipment: "Dumbbell", score: 3 },
-    { name: "Reverse Curl", equipment: "Barbell/EZ-Bar", score: 3 },
-    { name: "21s", equipment: "Barbell", score: 3 },
+    { name: "Incline DB Curl", equipment: "Dumbbell", score: 5, type: "isolation" },
+    { name: "Preacher Curl", equipment: "Machine/Barbell", score: 5, type: "isolation" },
+    { name: "Spider Curl", equipment: "Dumbbell/EZ-Bar", score: 5, type: "isolation" },
+    { name: "Bayesian Cable Curl", equipment: "Cable", score: 5, type: "isolation" },
+    { name: "Cable Curl", equipment: "Cable", score: 4, type: "isolation" },
+    { name: "EZ-Bar Curl", equipment: "Barbell", score: 4, type: "isolation" },
+    { name: "Hammer Curl", equipment: "Dumbbell", score: 3, type: "isolation" },
+    { name: "Concentration Curl", equipment: "Dumbbell", score: 3, type: "isolation" },
+    { name: "Reverse Curl", equipment: "Barbell/EZ-Bar", score: 3, type: "isolation" },
+    { name: "21s", equipment: "Barbell", score: 3, type: "isolation" },
   ],
   "Triceps": [
-    { name: "Overhead Cable Extension", equipment: "Cable", score: 5 },
-    { name: "Triceps Pressdown", equipment: "Cable", score: 4 },
-    { name: "Close-Grip Bench Press", equipment: "Barbell", score: 4 },
-    { name: "Skull Crusher", equipment: "Barbell/EZ-Bar", score: 4 },
-    { name: "JM Press", equipment: "Barbell", score: 4 },
-    { name: "Dip", equipment: "Bodyweight", score: 4 },
-    { name: "Single-Arm Overhead DB Extension", equipment: "Dumbbell", score: 3 },
-    { name: "Cable Kickback", equipment: "Cable", score: 3 },
-    { name: "Diamond Push-Up", equipment: "Bodyweight", score: 3 },
-    { name: "Bench Dip", equipment: "Bodyweight", score: 2 },
+    { name: "Overhead Cable Extension", equipment: "Cable", score: 5, type: "isolation" },
+    { name: "Triceps Pressdown", equipment: "Cable", score: 4, type: "isolation" },
+    { name: "Close-Grip Bench Press", equipment: "Barbell", score: 4, type: "compound" },
+    { name: "Skull Crusher", equipment: "Barbell/EZ-Bar", score: 4, type: "isolation" },
+    { name: "JM Press", equipment: "Barbell", score: 4, type: "compound" },
+    { name: "Dip", equipment: "Bodyweight", score: 4, type: "compound" },
+    { name: "Single-Arm Overhead DB Extension", equipment: "Dumbbell", score: 3, type: "isolation" },
+    { name: "Cable Kickback", equipment: "Cable", score: 3, type: "isolation" },
+    { name: "Diamond Push-Up", equipment: "Bodyweight", score: 3, type: "compound" },
+    { name: "Bench Dip", equipment: "Bodyweight", score: 2, type: "compound" },
   ],
   "Quads": [
-    { name: "Leg Press", equipment: "Machine", score: 5 },
-    { name: "Hack Squat", equipment: "Machine", score: 5 },
-    { name: "Front Squat", equipment: "Barbell", score: 4 },
-    { name: "Back Squat", equipment: "Barbell", score: 4 },
-    { name: "Leg Extension", equipment: "Machine", score: 4 },
-    { name: "Sissy Squat", equipment: "Bodyweight", score: 4 },
-    { name: "Bulgarian Split Squat", equipment: "Dumbbell", score: 4 },
-    { name: "Walking Lunge", equipment: "Dumbbell", score: 3 },
-    { name: "Smith Machine Squat", equipment: "Smith machine", score: 3 },
-    { name: "Goblet Squat", equipment: "Dumbbell", score: 3 },
+    { name: "Leg Press", equipment: "Machine", score: 5, type: "compound" },
+    { name: "Hack Squat", equipment: "Machine", score: 5, type: "compound" },
+    { name: "Front Squat", equipment: "Barbell", score: 4, type: "compound" },
+    { name: "Back Squat", equipment: "Barbell", score: 4, type: "compound" },
+    { name: "Leg Extension", equipment: "Machine", score: 4, type: "isolation" },
+    { name: "Sissy Squat", equipment: "Bodyweight", score: 4, type: "isolation" },
+    { name: "Bulgarian Split Squat", equipment: "Dumbbell", score: 4, type: "compound" },
+    { name: "Walking Lunge", equipment: "Dumbbell", score: 3, type: "compound" },
+    { name: "Smith Machine Squat", equipment: "Smith machine", score: 3, type: "compound" },
+    { name: "Goblet Squat", equipment: "Dumbbell", score: 3, type: "compound" },
   ],
   "Hamstrings": [
-    { name: "Romanian Deadlift", equipment: "Barbell/Dumbbell", score: 5 },
-    { name: "Seated Leg Curl", equipment: "Machine", score: 5 },
-    { name: "Lying Leg Curl", equipment: "Machine", score: 5 },
-    { name: "Nordic Curl", equipment: "Bodyweight", score: 4 },
-    { name: "Glute-Ham Raise", equipment: "Machine", score: 4 },
-    { name: "Stiff-Leg Deadlift", equipment: "Barbell", score: 4 },
-    { name: "Single-Leg RDL", equipment: "Dumbbell", score: 4 },
-    { name: "Seated Good Morning", equipment: "Barbell", score: 3 },
-    { name: "Swiss Ball Leg Curl", equipment: "Bodyweight", score: 3 },
+    { name: "Romanian Deadlift", equipment: "Barbell/Dumbbell", score: 5, type: "compound" },
+    { name: "Seated Leg Curl", equipment: "Machine", score: 5, type: "isolation" },
+    { name: "Lying Leg Curl", equipment: "Machine", score: 5, type: "isolation" },
+    { name: "Nordic Curl", equipment: "Bodyweight", score: 4, type: "isolation" },
+    { name: "Glute-Ham Raise", equipment: "Machine", score: 4, type: "compound" },
+    { name: "Stiff-Leg Deadlift", equipment: "Barbell", score: 4, type: "compound" },
+    { name: "Single-Leg RDL", equipment: "Dumbbell", score: 4, type: "compound" },
+    { name: "Seated Good Morning", equipment: "Barbell", score: 3, type: "compound" },
+    { name: "Swiss Ball Leg Curl", equipment: "Bodyweight", score: 3, type: "isolation" },
   ],
   "Glutes": [
-    { name: "Hip Thrust", equipment: "Barbell/Machine", score: 5 },
-    { name: "Barbell Glute Bridge", equipment: "Barbell", score: 4 },
-    { name: "Cable Pull-Through", equipment: "Cable", score: 4 },
-    { name: "Bulgarian Split Squat", equipment: "Dumbbell", score: 4 },
-    { name: "Glute Kickback Machine", equipment: "Machine", score: 4 },
-    { name: "Single-Leg Hip Thrust", equipment: "Bodyweight/Dumbbell", score: 4 },
-    { name: "Step-Up", equipment: "Dumbbell", score: 4 },
-    { name: "Cable Kickback", equipment: "Cable", score: 3 },
-    { name: "Frog Pump", equipment: "Bodyweight/Barbell", score: 3 },
-    { name: "Curtsy Lunge", equipment: "Dumbbell", score: 3 },
+    { name: "Hip Thrust", equipment: "Barbell/Machine", score: 5, type: "isolation" },
+    { name: "Barbell Glute Bridge", equipment: "Barbell", score: 4, type: "isolation" },
+    { name: "Cable Pull-Through", equipment: "Cable", score: 4, type: "isolation" },
+    { name: "Bulgarian Split Squat", equipment: "Dumbbell", score: 4, type: "compound" },
+    { name: "Glute Kickback Machine", equipment: "Machine", score: 4, type: "isolation" },
+    { name: "Single-Leg Hip Thrust", equipment: "Bodyweight/Dumbbell", score: 4, type: "isolation" },
+    { name: "Step-Up", equipment: "Dumbbell", score: 4, type: "compound" },
+    { name: "Cable Kickback", equipment: "Cable", score: 3, type: "isolation" },
+    { name: "Frog Pump", equipment: "Bodyweight/Barbell", score: 3, type: "isolation" },
+    { name: "Curtsy Lunge", equipment: "Dumbbell", score: 3, type: "compound" },
   ],
   "Calves": [
-    { name: "Standing Calf Raise", equipment: "Machine", score: 5 },
-    { name: "Seated Calf Raise", equipment: "Machine", score: 5 },
-    { name: "Leg Press Calf Raise", equipment: "Machine", score: 4 },
-    { name: "Donkey Calf Raise", equipment: "Machine", score: 4 },
-    { name: "Smith Machine Calf Raise", equipment: "Smith machine", score: 4 },
-    { name: "Single-Leg Calf Raise", equipment: "Bodyweight", score: 3 },
+    { name: "Standing Calf Raise", equipment: "Machine", score: 5, type: "isolation" },
+    { name: "Seated Calf Raise", equipment: "Machine", score: 5, type: "isolation" },
+    { name: "Leg Press Calf Raise", equipment: "Machine", score: 4, type: "isolation" },
+    { name: "Donkey Calf Raise", equipment: "Machine", score: 4, type: "isolation" },
+    { name: "Smith Machine Calf Raise", equipment: "Smith machine", score: 4, type: "isolation" },
+    { name: "Single-Leg Calf Raise", equipment: "Bodyweight", score: 3, type: "isolation" },
   ],
   "Core": [
-    { name: "Cable Crunch", equipment: "Cable", score: 5 },
-    { name: "Hanging Leg Raise", equipment: "Bodyweight", score: 5 },
-    { name: "Ab Wheel Rollout", equipment: "Bodyweight", score: 5 },
-    { name: "Machine Crunch", equipment: "Machine", score: 4 },
-    { name: "Pallof Press", equipment: "Cable", score: 4 },
-    { name: "Dragon Flag", equipment: "Bodyweight", score: 4 },
-    { name: "Reverse Crunch", equipment: "Bodyweight", score: 4 },
-    { name: "Weighted Sit-Up", equipment: "Bodyweight/Dumbbell", score: 3 },
-    { name: "Russian Twist", equipment: "Dumbbell/Plate", score: 3 },
-    { name: "Plank", equipment: "Bodyweight", score: 3 },
+    { name: "Cable Crunch", equipment: "Cable", score: 5, type: "isolation" },
+    { name: "Hanging Leg Raise", equipment: "Bodyweight", score: 5, type: "isolation" },
+    { name: "Ab Wheel Rollout", equipment: "Bodyweight", score: 5, type: "isolation" },
+    { name: "Machine Crunch", equipment: "Machine", score: 4, type: "isolation" },
+    { name: "Pallof Press", equipment: "Cable", score: 4, type: "isolation" },
+    { name: "Dragon Flag", equipment: "Bodyweight", score: 4, type: "isolation" },
+    { name: "Reverse Crunch", equipment: "Bodyweight", score: 4, type: "isolation" },
+    { name: "Weighted Sit-Up", equipment: "Bodyweight/Dumbbell", score: 3, type: "isolation" },
+    { name: "Russian Twist", equipment: "Dumbbell/Plate", score: 3, type: "isolation" },
+    { name: "Plank", equipment: "Bodyweight", score: 3, type: "isolation" },
   ],
   "Adductors": [
-    { name: "Adductor Machine", equipment: "Machine", score: 5 },
-    { name: "Cable Adduction", equipment: "Cable", score: 4 },
-    { name: "Copenhagen Plank", equipment: "Bodyweight", score: 4 },
-    { name: "Sumo Squat", equipment: "Barbell/Dumbbell", score: 3 },
-    { name: "Side Lunge", equipment: "Dumbbell", score: 3 },
-    { name: "Adductor Plank", equipment: "Bodyweight", score: 3 },
+    { name: "Adductor Machine", equipment: "Machine", score: 5, type: "isolation" },
+    { name: "Cable Adduction", equipment: "Cable", score: 4, type: "isolation" },
+    { name: "Copenhagen Plank", equipment: "Bodyweight", score: 4, type: "isolation" },
+    { name: "Sumo Squat", equipment: "Barbell/Dumbbell", score: 3, type: "compound" },
+    { name: "Side Lunge", equipment: "Dumbbell", score: 3, type: "compound" },
+    { name: "Adductor Plank", equipment: "Bodyweight", score: 3, type: "isolation" },
   ],
+};
+
+// Compound picks (multi-joint: leg press, presses, pulldowns, rows, hinge patterns) run
+// hotter on the cardiorespiratory system than local muscle fatigue can keep up with —
+// same reasoning as PROGRAM's own compound lifts (see GYM_KNOWLEDGE.md). Isolation picks
+// keep the higher-rep, shorter-rest default. Only used for library-sourced substitutes —
+// the curated ALT_OPTIONS already match the original exercise's demand profile.
+const TYPE_DEFAULTS = {
+  compound: { reps: "6-8", rest: 135, restLabel: "2-2.5min" },
+  isolation: { reps: "10-15", rest: 90, restLabel: "90s" },
 };
 
 // Each exercise's `alt` text becomes one or more selectable substitute exercises
@@ -724,6 +734,13 @@ function RestTimer({ seconds, label }) {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [running]);
 
+  // `seconds` can change after mount — e.g. swapping to a library substitute with a
+  // different compound/isolation rest target. Only apply it while idle so we never
+  // yank the clock out from under an active countdown.
+  useEffect(() => {
+    if (!running && !done) setRemaining(seconds);
+  }, [seconds]);
+
   useEffect(() => () => { clearInterval(intervalRef.current); clearAudio(); }, []);
 
   const handleClick = () => { if (done) reset(); else if (running) pause(); else start(); };
@@ -755,13 +772,13 @@ function MuscleGroupPicker({ muscleGroup, onSelect, onClose }) {
           <span>{muscleGroup} exercises</span>
           <button className="tracker-icon-btn" onClick={onClose}><E size={13}>✕</E></button>
         </div>
-        <p className="tracker-share-hint">Ranked by general training principles — range of motion, muscle activation, resistance stability. A sensible default, not a verdict on what's best for you.</p>
+        <p className="tracker-share-hint">Ranked by general training principles — range of motion, muscle activation, resistance stability. A sensible default, not a verdict on what's best for you. Picking a compound move sets a 6-8 rep / 2-2.5min-rest target; isolation keeps 10-15 reps / 90s.</p>
         <div className="tracker-lib-list">
           {options.map((ex) => (
-            <button key={ex.name} className="tracker-lib-row" onClick={() => onSelect(ex.name)}>
+            <button key={ex.name} className="tracker-lib-row" onClick={() => onSelect(ex)}>
               <div>
                 <div className="tracker-lib-row-name">{ex.name}</div>
-                <div className="tracker-lib-row-equip">{ex.equipment}</div>
+                <div className="tracker-lib-row-equip">{ex.equipment} · {ex.type === "compound" ? "Compound" : "Isolation"}</div>
               </div>
               <div className="tracker-lib-row-score" title={`${ex.score}/5`}>{"★".repeat(ex.score)}{"☆".repeat(5 - ex.score)}</div>
             </button>
@@ -773,7 +790,7 @@ function MuscleGroupPicker({ muscleGroup, onSelect, onClose }) {
   );
 }
 
-function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst, altOptions, selectedVariantId, onSelectVariant, customName, onCustomNameChange, done, onToggleDone }) {
+function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst, altOptions, selectedVariantId, onSelectVariant, customName, onCustomNameChange, customType, onCustomPick, done, onToggleDone }) {
   // Starts collapsed if this exercise was already marked done on mount (e.g. a
   // page refresh mid-workout) — otherwise the whole point of collapsing to focus
   // on what's left would be undone by every reload.
@@ -785,6 +802,11 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
   const isCustom = selectedVariantId === customVariantId(exercise.id);
   const displayName = isCustom ? (customName || "Custom substitute") : resolveExerciseName(selectedVariantId);
   const hasAnyData = Array.isArray(values) && values.some((s) => s && (s.weight || s.reps));
+  // A library-sourced substitute carries its own compound/isolation type, which can
+  // call for a different rep/rest target than the slot's original exercise — e.g.
+  // swapping an isolation exercise for a compound library pick. Free-typed names
+  // (no known type) just keep using the original exercise's target.
+  const effective = (isCustom && customType && TYPE_DEFAULTS[customType]) ? TYPE_DEFAULTS[customType] : exercise;
 
   return (
     <div className="tracker-card" style={{ opacity: !open && done ? 0.6 : 1 }}>
@@ -796,7 +818,7 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
             {displayName}
           </div>
           <div className="tracker-card-sub">
-            {exercise.target} · {totalSets}×{exercise.reps} · RPE {exercise.rpe}
+            {exercise.target} · {totalSets}×{effective.reps} · RPE {exercise.rpe}
             {extraSet && <span className="tracker-badge">+1 set this phase</span>}
             {isFirst && <span className="tracker-badge tracker-badge-ramp">warm-up first</span>}
           </div>
@@ -828,9 +850,9 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
             <MuscleGroupPicker
               muscleGroup={exercise.target}
               onClose={() => setBrowsingLibrary(false)}
-              onSelect={(name) => {
+              onSelect={(ex) => {
                 onSelectVariant(customVariantId(exercise.id));
-                onCustomNameChange(name);
+                onCustomPick(ex.name, ex.type);
                 setBrowsingLibrary(false);
               }}
             />
@@ -851,7 +873,7 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
             </div>
           )}
 
-          <RestTimer seconds={exercise.rest} label={exercise.restLabel} />
+          <RestTimer seconds={effective.rest} label={effective.restLabel} />
 
           {lastSession && (
             <div className="tracker-lastsession">Last time: {lastSession.map((s) => `${s.weight || "-"}×${s.reps || "-"}`).join("  ·  ")}</div>
@@ -973,6 +995,10 @@ function App() {
   const [trendExercise, setTrendExercise] = useState("ua2");
   const [altSelection, setAltSelection] = useState(() => loadJSON("vtaper_altSelection", {}));
   const [customAltNames, setCustomAltNames] = useState(() => loadJSON("vtaper_customAltNames", {}));
+  // Compound/isolation type of a library-picked substitute, keyed the same way as
+  // customAltNames. Only set when the name came from the library (not free-typed),
+  // since that's the only case where we know enough to suggest a rep/rest target.
+  const [customAltTypes, setCustomAltTypes] = useState(() => loadJSON("vtaper_customAltTypes", {}));
   const [pumpRows, setPumpRows] = useState(initialDraft.pumpRows || [{ name: "", sets: "", reps: "" }]);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
@@ -984,6 +1010,7 @@ function App() {
 
   useEffect(() => { saveJSON("vtaper_altSelection", altSelection); }, [altSelection]);
   useEffect(() => { saveJSON("vtaper_customAltNames", customAltNames); }, [customAltNames]);
+  useEffect(() => { saveJSON("vtaper_customAltTypes", customAltTypes); }, [customAltTypes]);
 
   // Persist the in-progress entry on every change so it survives a page refresh.
   useEffect(() => { saveJSON("vtaper_draft", { dayType, values, pumpRows, doneExercises }); }, [dayType, values, pumpRows, doneExercises]);
@@ -1519,7 +1546,17 @@ function App() {
                   selectedVariantId={variantId}
                   onSelectVariant={(vid) => selectVariant(ex.id, vid)}
                   customName={customAltNames[ex.id] || ""}
-                  onCustomNameChange={(text) => setCustomAltNames((prev) => ({ ...prev, [ex.id]: text }))}
+                  onCustomNameChange={(text) => {
+                    setCustomAltNames((prev) => ({ ...prev, [ex.id]: text }));
+                    // Free-typed text has an unknown type — drop any stale type from a
+                    // previous library pick so it doesn't get misapplied to this name.
+                    setCustomAltTypes((prev) => { const next = { ...prev }; delete next[ex.id]; return next; });
+                  }}
+                  customType={customAltTypes[ex.id]}
+                  onCustomPick={(name, type) => {
+                    setCustomAltNames((prev) => ({ ...prev, [ex.id]: name }));
+                    setCustomAltTypes((prev) => ({ ...prev, [ex.id]: type }));
+                  }}
                   done={!!doneExercises[variantId]}
                   onToggleDone={() => toggleExerciseDone(variantId)}
                 />
