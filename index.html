@@ -81,9 +81,8 @@ body { margin: 0; background: #000; }
 .tracker-tab { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 9px 0; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: var(--radius-pill); font-family: var(--font-body); }
 .tracker-tab.active { color: #fff; background: var(--accent-primary); }
 .tracker-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
-.tracker-day-select { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
-.tracker-day-btn { background: var(--panel-2); border: none; color: var(--text-muted); padding: 8px 14px; border-radius: var(--radius-pill); font-size: 12px; cursor: pointer; font-family: var(--font-body); font-weight: 500; }
-.tracker-day-btn.active { background: var(--accent-primary); color: #fff; font-weight: 700; }
+.tracker-day-select { width: 100%; background: var(--panel-2); border: var(--border-w) solid transparent; color: var(--text); padding: 12px 14px; border-radius: var(--radius-ctl); font-size: 14px; font-weight: 700; font-family: var(--font-body); margin-bottom: 4px; }
+.tracker-day-select:focus { border-color: var(--accent-primary); outline: none; }
 .tracker-card { background: var(--panel); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-card); }
 .tracker-card-head { width: 100%; background: transparent; border: none; color: var(--text); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-align: left; }
 .tracker-card-head-row { cursor: default; gap: 10px; }
@@ -1504,11 +1503,11 @@ function App() {
 
       {tab === "today" && (
         <div className="tracker-body">
-          <div className="tracker-day-select">
+          <select className="tracker-day-select" value={dayType} onChange={(e) => setDayType(e.target.value)}>
             {[...DAY_ORDER, "Pump/Recovery"].map((d) => (
-              <button key={d} className={`tracker-day-btn ${dayType === d ? "active" : ""}`} onClick={() => setDayType(d)}>{d}</button>
+              <option key={d} value={d}>{d}</option>
             ))}
-          </div>
+          </select>
 
           {dayType !== "Pump/Recovery" && (
             <div className="tracker-card tracker-warmup-card">
