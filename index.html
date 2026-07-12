@@ -181,6 +181,14 @@ html[data-theme="light"] .tracker-root {
 .tracker-history-row { display: flex; justify-content: space-between; font-size: var(--text-sm); padding: 6px 0; border-bottom: 1px solid var(--panel-3); }
 .tracker-history-row:last-child { border-bottom: none; }
 .tracker-mono { font-family: var(--font-mono); color: var(--text-muted); }
+.tracker-bs-field-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.tracker-bs-field-label { font-size: var(--text-2xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.tracker-bs-tile { background: var(--panel-2); border-radius: var(--radius-ctl); padding: var(--space-card); }
+.tracker-bs-tile-label { font-size: var(--text-2xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.tracker-bs-tile-value { font-family: var(--font-mono); font-size: var(--text-base); font-weight: var(--weight-bold); color: var(--text); }
+.tracker-bs-tile-delta { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-muted); margin-top: 4px; }
+.tracker-bs-row { display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm); padding: 8px 0; border-bottom: 1px solid var(--panel-3); }
+.tracker-bs-row:last-child { border-bottom: none; }
 .tracker-confirm-panel { background: rgba(255,92,114,0.12); border-radius: var(--radius-card); padding: var(--space-card) var(--space-page); margin-bottom: 14px; }
 .tracker-confirm-text { font-size: var(--text-sm); color: var(--text); line-height: 1.5; margin: 0 0 10px; }
 .tracker-confirm-actions { display: flex; gap: 8px; }
@@ -644,6 +652,10 @@ function normalizeLog(row) {
   return { id: row.id, date: row.date, dayType: row.day_type, week: row.week, phase: row.phase, exercises: row.exercises || undefined, pump: row.pump || undefined };
 }
 
+function normalizeBodyStat(row) {
+  return { id: row.id, date: row.date, weight: row.weight, bodyFat: row.body_fat, muscleMass: row.muscle_mass };
+}
+
 // Reduces a log into the numbers + exercise breakdown the share card shows.
 // Pump/Recovery sessions don't track weight, so they get a sets/movements
 // summary instead of a volume figure.
@@ -723,8 +735,8 @@ function ShareCard({ log, bg }) {
   );
 }
 
-function MiniLineChart({ data }) {
-  if (data.length < 2) return <p className="tracker-empty-note">Log this exercise at least twice to see a trend.</p>;
+function MiniLineChart({ data, emptyText = "Log this exercise at least twice to see a trend." }) {
+  if (data.length < 2) return <p className="tracker-empty-note">{emptyText}</p>;
   const w = 300, h = 150, pad = 26;
   const weights = data.map((d) => d.weight);
   const max = Math.max(...weights), min = Math.min(...weights);
@@ -1163,6 +1175,12 @@ function App() {
   const [dataError, setDataError] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [logs, setLogs] = useState([]);
+  const [bodyStats, setBodyStats] = useState([]);
+  const [bsWeight, setBsWeight] = useState("");
+  const [bsBodyFat, setBsBodyFat] = useState("");
+  const [bsMuscleMass, setBsMuscleMass] = useState("");
+  const [savingBodyStat, setSavingBodyStat] = useState(false);
+  const [confirmingDeleteBodyStat, setConfirmingDeleteBodyStat] = useState(null);
   const [tab, setTab] = useState("today");
   // Unsaved workout entry (day + typed numbers) is stashed in localStorage so a
   // page refresh mid-session doesn't wipe what's already filled in. Cleared on save.
@@ -1220,9 +1238,10 @@ function App() {
     setWakingServer(true);
     setDataError("");
     try {
-      const [meta, logsData] = await Promise.all([apiFetch("/api/meta", tok), apiFetch("/api/logs", tok)]);
+      const [meta, logsData, bodyStatsData] = await Promise.all([apiFetch("/api/meta", tok), apiFetch("/api/logs", tok), apiFetch("/api/body-stats", tok)]);
       setStartDate(meta ? meta.start_date : null);
       setLogs((logsData || []).map(normalizeLog));
+      setBodyStats((bodyStatsData || []).map(normalizeBodyStat));
     } catch (err) {
       if (/token|credentials/i.test(err.message)) {
         localStorage.removeItem("vtaper_token");
@@ -1270,6 +1289,7 @@ function App() {
     setToken(null);
     setStartDate(null);
     setLogs([]);
+    setBodyStats([]);
   };
 
   const week = useMemo(() => {
@@ -1542,16 +1562,51 @@ function App() {
     }
     setLogs([]);
     setStartDate(null);
+    setBodyStats([]);
   };
 
   const exportData = () => {
-    const payload = JSON.stringify({ startDate, logs }, null, 2);
+    const payload = JSON.stringify({ startDate, logs, bodyStats }, null, 2);
     const blob = new Blob([payload], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = `vtaper-log-backup-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const saveBodyStat = async () => {
+    if (!bsWeight && !bsBodyFat && !bsMuscleMass) return;
+    setSavingBodyStat(true);
+    setDataError("");
+    try {
+      const row = await apiFetch("/api/body-stats", token, {
+        method: "POST",
+        body: JSON.stringify({
+          date: new Date().toISOString(),
+          weight: bsWeight ? Number(bsWeight) : null,
+          bodyFat: bsBodyFat ? Number(bsBodyFat) : null,
+          muscleMass: bsMuscleMass ? Number(bsMuscleMass) : null,
+        }),
+      });
+      setBodyStats((prev) => [...prev, normalizeBodyStat(row)]);
+      setBsWeight(""); setBsBodyFat(""); setBsMuscleMass("");
+      showToast("Body stats saved");
+    } catch (err) {
+      setDataError(err.message || "Couldn't save body stats");
+    } finally {
+      setSavingBodyStat(false);
+    }
+  };
+
+  const deleteBodyStat = async (id) => {
+    setConfirmingDeleteBodyStat(null);
+    try {
+      await apiFetch(`/api/body-stats/${id}`, token, { method: "DELETE" });
+      setBodyStats((prev) => prev.filter((b) => b.id !== id));
+    } catch (err) {
+      setDataError(err.message || "Couldn't delete entry");
+    }
   };
 
   const addPumpPreset = (name) => {
@@ -1593,6 +1648,19 @@ function App() {
   }, [logs, trendExercise]);
 
   const liftingLogsDesc = [...logs].reverse();
+
+  // bodyStats is ordered ascending by date (same as logs). The latest entry
+  // vs. the one before it drives the delta tiles; the whole array (oldest
+  // first) feeds the trend chart directly, same shape MiniLineChart already
+  // expects for exercise trends.
+  const bodyStatsDesc = [...bodyStats].reverse();
+  const latestBodyStat = bodyStatsDesc[0] || null;
+  const prevBodyStat = bodyStatsDesc[1] || null;
+  const bodyStatDelta = (key) => {
+    if (!latestBodyStat || !prevBodyStat || latestBodyStat[key] == null || prevBodyStat[key] == null) return null;
+    return latestBodyStat[key] - prevBodyStat[key];
+  };
+  const weightTrendData = bodyStats.filter((b) => b.weight != null).map((b) => ({ date: fmtDate(b.date), weight: Number(b.weight) }));
 
   // History reads much faster grouped by program week than as one long flat
   // list — each log already carries the week it was logged under.
@@ -1712,7 +1780,7 @@ function App() {
 
         {confirmingReset && (
           <div className="tracker-confirm-panel">
-            <p className="tracker-confirm-text">This erases every logged workout and your start date, permanently. Consider tapping the download icon to export a backup first.</p>
+            <p className="tracker-confirm-text">This erases every logged workout, body-stat entry, and your start date, permanently. Consider tapping the download icon to export a backup first.</p>
             <div className="tracker-confirm-actions">
               <button className="tracker-confirm-cancel" onClick={() => setConfirmingReset(false)}>Cancel</button>
               <button className="tracker-confirm-danger" onClick={resetAll}>Yes, delete everything</button>
@@ -1733,6 +1801,7 @@ function App() {
         <div className="tracker-tabs">
           <button className={`tracker-tab ${tab === "today" ? "active" : ""}`} onClick={() => setTab("today")}>Today</button>
           <button className={`tracker-tab ${tab === "history" ? "active" : ""}`} onClick={() => setTab("history")}>History</button>
+          <button className={`tracker-tab ${tab === "body" ? "active" : ""}`} onClick={() => setTab("body")}>Body</button>
         </div>
 
         {tab === "today" && (
@@ -1929,6 +1998,99 @@ function App() {
               })}
             </div>
           ))}
+        </div>
+      )}
+
+      {tab === "body" && (
+        <div className="tracker-body">
+          <div className="tracker-card">
+            <div className="tracker-card-body tracker-card-body-standalone">
+              <div className="tracker-card-title" style={{ marginBottom: 4 }}>Log this week</div>
+              <p className="tracker-pump-note" style={{ marginBottom: 12 }}>Weigh in, then fill in whatever your scale gives you — any of the three is fine on its own.</p>
+              <div className="tracker-bs-field-grid">
+                <div>
+                  <div className="tracker-bs-field-label">Weight (kg)</div>
+                  <input type="number" inputMode="decimal" min="0" className="tracker-input" placeholder="kg" value={bsWeight} onChange={(e) => setBsWeight(e.target.value)} />
+                </div>
+                <div>
+                  <div className="tracker-bs-field-label">Body fat (%)</div>
+                  <input type="number" inputMode="decimal" min="0" className="tracker-input" placeholder="%" value={bsBodyFat} onChange={(e) => setBsBodyFat(e.target.value)} />
+                </div>
+                <div>
+                  <div className="tracker-bs-field-label">Muscle (kg)</div>
+                  <input type="number" inputMode="decimal" min="0" className="tracker-input" placeholder="kg" value={bsMuscleMass} onChange={(e) => setBsMuscleMass(e.target.value)} />
+                </div>
+              </div>
+              <button className="tracker-primary-btn" style={{ margin: 0 }} disabled={savingBodyStat || (!bsWeight && !bsBodyFat && !bsMuscleMass)} onClick={saveBodyStat}>
+                {savingBodyStat ? "Saving…" : "Save this week"}
+              </button>
+            </div>
+          </div>
+
+          {latestBodyStat && (
+            <div className="tracker-bs-field-grid" style={{ marginBottom: 0 }}>
+              <div className="tracker-bs-tile">
+                <div className="tracker-bs-tile-label">Weight</div>
+                <div className="tracker-bs-tile-value">{latestBodyStat.weight != null ? `${latestBodyStat.weight} kg` : "—"}</div>
+                {bodyStatDelta("weight") != null && (
+                  <div className="tracker-bs-tile-delta">{bodyStatDelta("weight") >= 0 ? "▲" : "▼"} {Math.abs(bodyStatDelta("weight")).toFixed(1)} vs last</div>
+                )}
+              </div>
+              <div className="tracker-bs-tile">
+                <div className="tracker-bs-tile-label">Body fat</div>
+                <div className="tracker-bs-tile-value">{latestBodyStat.bodyFat != null ? `${latestBodyStat.bodyFat}%` : "—"}</div>
+                {bodyStatDelta("bodyFat") != null && (
+                  <div className="tracker-bs-tile-delta">{bodyStatDelta("bodyFat") >= 0 ? "▲" : "▼"} {Math.abs(bodyStatDelta("bodyFat")).toFixed(1)} vs last</div>
+                )}
+              </div>
+              <div className="tracker-bs-tile">
+                <div className="tracker-bs-tile-label">Muscle</div>
+                <div className="tracker-bs-tile-value">{latestBodyStat.muscleMass != null ? `${latestBodyStat.muscleMass} kg` : "—"}</div>
+                {bodyStatDelta("muscleMass") != null && (
+                  <div className="tracker-bs-tile-delta">{bodyStatDelta("muscleMass") >= 0 ? "▲" : "▼"} {Math.abs(bodyStatDelta("muscleMass")).toFixed(1)} vs last</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="tracker-card">
+            <div className="tracker-card-body tracker-card-body-standalone">
+              <div className="tracker-trend-head">
+                <E size={14}><span style={{ color: "var(--accent-primary)" }}>📈</span></E>
+                <div className="tracker-card-title" style={{ fontSize: "var(--text-md)" }}>Weight trend</div>
+              </div>
+              <MiniLineChart data={weightTrendData} emptyText="Log your weight at least twice to see a trend." />
+            </div>
+          </div>
+
+          {bodyStatsDesc.length === 0 ? (
+            <p className="tracker-empty-note">No body stats logged yet.</p>
+          ) : (
+            <div className="tracker-card">
+              <div className="tracker-card-body tracker-card-body-standalone">
+                {bodyStatsDesc.map((b) => (
+                  <React.Fragment key={b.id}>
+                    <div className="tracker-bs-row">
+                      <span>{fmtDate(b.date)}</span>
+                      <span className="tracker-mono">
+                        {b.weight != null ? `${b.weight}kg` : "—"} · {b.bodyFat != null ? `${b.bodyFat}%` : "—"} · {b.muscleMass != null ? `${b.muscleMass}kg` : "—"}
+                      </span>
+                      <button className="tracker-icon-btn" onClick={() => setConfirmingDeleteBodyStat(b.id)} title="Delete entry"><E size={13}>🗑</E></button>
+                    </div>
+                    {confirmingDeleteBodyStat === b.id && (
+                      <div className="tracker-confirm-panel" style={{ margin: "0 0 12px" }}>
+                        <p className="tracker-confirm-text">Delete this entry from {fmtDate(b.date)}? This can't be undone.</p>
+                        <div className="tracker-confirm-actions">
+                          <button className="tracker-confirm-cancel" onClick={() => setConfirmingDeleteBodyStat(null)}>Cancel</button>
+                          <button className="tracker-confirm-danger" onClick={() => deleteBodyStat(b.id)}>Delete</button>
+                        </div>
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

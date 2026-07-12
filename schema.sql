@@ -18,3 +18,14 @@ CREATE TABLE IF NOT EXISTS logs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_logs_date ON logs (date);
+
+CREATE TABLE IF NOT EXISTS body_stats (
+  id SERIAL PRIMARY KEY,
+  date TIMESTAMPTZ NOT NULL,
+  weight NUMERIC,
+  body_fat NUMERIC,
+  muscle_mass NUMERIC,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_body_stats_date ON body_stats (date);

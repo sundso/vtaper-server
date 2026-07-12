@@ -25,8 +25,8 @@ frontend conventions and the theming/token system.
    npm install
    ```
 2. Create a Postgres database (e.g. via Neon or Supabase) and run
-   [`schema.sql`](schema.sql) against it once to create the `meta` and `logs`
-   tables.
+   [`schema.sql`](schema.sql) against it once to create the `meta`, `logs`,
+   and `body_stats` tables.
 3. Generate a password hash for your admin login:
    ```
    npm run hash-password -- <your-password>
@@ -63,7 +63,10 @@ All routes below `/api` (except login) require `Authorization: Bearer
 | GET    | `/api/logs`       | List all workout logs                |
 | POST   | `/api/logs`       | Create a workout log                 |
 | DELETE | `/api/logs/:id`   | Delete a single workout log          |
-| DELETE | `/api/reset`      | Delete all logs and reset start date |
+| GET    | `/api/body-stats` | List all body-stat entries           |
+| POST   | `/api/body-stats` | Create a body-stat entry             |
+| DELETE | `/api/body-stats/:id` | Delete a single body-stat entry  |
+| DELETE | `/api/reset`      | Delete all logs, body stats, and reset start date |
 
 ## Notes
 
