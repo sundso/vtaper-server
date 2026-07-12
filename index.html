@@ -136,11 +136,7 @@ html[data-theme="light"] .tracker-root {
 .tracker-ramp-body { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
 .tracker-ramp-step { display: flex; justify-content: space-between; font-size: var(--text-sm); }
 .tracker-ramp-note { font-size: var(--text-xs); color: var(--text-muted); line-height: 1.5; margin: 4px 0 0; }
-.tracker-info-card { background: rgba(243,169,78,0.12); }
-.tracker-info-title { display: flex; align-items: center; gap: 6px; font-size: var(--text-md); font-weight: var(--weight-bold); margin-bottom: 6px; }
 .tracker-timer-btn { border: none; background: var(--panel-2); color: var(--text); padding: 12px 20px; border-radius: var(--radius-pill); font-size: var(--text-lg); font-weight: var(--weight-bold); cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 44px; }
-.tracker-timer-reset { width: 44px; height: 44px; }
-.tracker-rest-label { font-size: var(--text-xs); color: var(--text-muted); }
 .tracker-lastsession { font-size: var(--text-xs); color: var(--text-muted); font-family: var(--font-mono); }
 .tracker-progression-note { font-size: var(--text-xs); line-height: 1.4; margin-top: 3px; color: var(--text-muted); }
 .tracker-progression-note.is-up { color: var(--accent-success); }
@@ -165,6 +161,9 @@ html[data-theme="light"] .tracker-root {
 }
 .tracker-done-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .tracker-done-btn-undo { background: var(--panel-2); color: var(--text-muted); }
+.tracker-done-btn-resting { position: relative; overflow: hidden; background: var(--panel-2); color: var(--text); }
+.tracker-done-btn-fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--accent-primary); transition: width 0.5s linear; z-index: 0; }
+.tracker-done-btn-label { position: relative; z-index: 1; display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); }
 .tracker-session-bar {
   position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%);
   width: calc(100% - 32px); max-width: 448px; z-index: 20;
@@ -863,7 +862,7 @@ const RestAudio = (() => {
   return { start, blip };
 })();
 
-function RestTimer({ seconds, label, autoStart, onFinish, compact }) {
+function RestTimer({ seconds, autoStart, onFinish, compact }) {
   const [remaining, setRemaining] = useState(seconds);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
@@ -966,20 +965,16 @@ function RestTimer({ seconds, label, autoStart, onFinish, compact }) {
     );
   }
 
+  // Takes over the Done button's own spot for the rest-before-next-exercise period —
+  // no separate card. The fill drains from 100% to 0% as a progress bar; onFinish
+  // (wired to clear the parent's restingVariantId) fires the moment it empties, which
+  // is what actually triggers this exercise collapsing and the next one opening.
+  const pct = Math.max(0, Math.min(100, (remaining / seconds) * 100));
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <button onClick={handleClick} className="tracker-timer-btn"
-        title="Rest timer — chimes even when your phone is locked"
-        style={{ background: done ? "var(--accent-success)" : running ? "var(--accent-primary)" : "transparent",
-                 color: (done || running) ? "#fff" : "var(--text)", borderColor: (done || running) ? "transparent" : "var(--panel-3)" }}>
-        <E size={17}>⏱</E>
-        <span style={{ fontFamily: "var(--font-mono)" }}>{done ? "Done" : `${mm}:${ss.toString().padStart(2, "0")}`}</span>
-      </button>
-      {(running || remaining !== seconds) && !done && (
-        <button onClick={reset} className="tracker-icon-btn tracker-timer-reset" title="Reset timer"><E size={16}>↺</E></button>
-      )}
-      <span className="tracker-rest-label">rest {label}</span>
-    </div>
+    <button onClick={handleClick} className="tracker-done-btn tracker-done-btn-resting" title="Resting — tap to pause/resume">
+      <span className="tracker-done-btn-fill" style={{ width: `${pct}%` }} />
+      <span className="tracker-done-btn-label"><E size={14}>⏱</E> Resting {mm}:{ss.toString().padStart(2, "0")}</span>
+    </button>
   );
 }
 
@@ -1013,7 +1008,7 @@ function MuscleGroupPicker({ muscleGroup, onSelect, onClose }) {
   );
 }
 
-function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst, isLast, altOptions, selectedVariantId, onSelectVariant, customName, onCustomNameChange, customType, onCustomPick, done, onToggleDone, isCurrent, restingVariantId }) {
+function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst, isLast, altOptions, selectedVariantId, onSelectVariant, customName, onCustomNameChange, customType, onCustomPick, done, onToggleDone, isCurrent, restingVariantId, onRestFinish }) {
   // Only the current (first not-yet-done) exercise in the day starts open — everything
   // else starts collapsed, so a long day reads as a focused one-at-a-time list instead of
   // a wall of open input forms. Whenever this card *becomes* the current one, it
@@ -1153,7 +1148,7 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
                       onChange={(e) => onChange(selectedVariantId, i, "reps", e.target.value)}
                       className="tracker-input" />
                     {resting && (
-                      <RestTimer seconds={effective.rest} label={effective.restLabel} autoStart compact
+                      <RestTimer seconds={effective.rest} autoStart compact
                         onFinish={() => setRestingSetIdx((prev) => (prev === i ? null : prev))} />
                     )}
                   </div>
@@ -1176,13 +1171,17 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
             })}
           </div>
 
-          <button
-            className={`tracker-done-btn ${done ? "tracker-done-btn-undo" : ""}`}
-            disabled={!done && !hasAnyData}
-            onClick={() => { const wasDone = done; onToggleDone(); if (!wasDone && isLast) setOpen(false); }}
-          >
-            {done ? <><E size={14}>↺</E> Mark not done</> : <><E size={14}>✓</E> Done — collapse</>}
-          </button>
+          {isResting ? (
+            <RestTimer seconds={effective.rest} autoStart onFinish={onRestFinish} />
+          ) : (
+            <button
+              className={`tracker-done-btn ${done ? "tracker-done-btn-undo" : ""}`}
+              disabled={!done && !hasAnyData}
+              onClick={() => { const wasDone = done; onToggleDone(); if (!wasDone && isLast) setOpen(false); }}
+            >
+              {done ? <><E size={14}>↺</E> Mark not done</> : <><E size={14}>✓</E> Done — collapse</>}
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -1996,9 +1995,7 @@ function App() {
               const variantId = altSelection[ex.id] || ex.id;
               const done = !!doneExercises[variantId];
               const isLast = idx === PROGRAM[dayType].length - 1;
-              const isCustom = variantId === customVariantId(ex.id);
               const customType = customAltTypes[ex.id];
-              const effective = (isCustom && customType && TYPE_DEFAULTS[customType]) ? TYPE_DEFAULTS[customType] : ex;
               return (
                 <React.Fragment key={ex.id}>
                   <ExerciseCard
@@ -2035,17 +2032,8 @@ function App() {
                         return prev;
                       });
                     }}
+                    onRestFinish={() => setRestingVariantId((prev) => (prev === variantId ? null : prev))}
                   />
-                  {done && !isLast && (
-                    <div className="tracker-card tracker-info-card">
-                      <div className="tracker-card-body tracker-card-body-standalone">
-                        <div className="tracker-info-title"><E size={14}><span style={{ color: "var(--accent-secondary)" }}>⏱</span></E>Rest before next exercise</div>
-                        <RestTimer seconds={effective.rest} label={effective.restLabel}
-                          autoStart={restingVariantId === variantId}
-                          onFinish={() => setRestingVariantId((prev) => (prev === variantId ? null : prev))} />
-                      </div>
-                    </div>
-                  )}
                 </React.Fragment>
               );
             })
