@@ -284,14 +284,6 @@ const PROGRAM = {
     { id: "ua7", name: "Biceps Curl", target: "Biceps", type: "isolation", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: "Any curl variation" },
     { id: "ua8", name: "Triceps Pressdown", target: "Triceps", type: "isolation", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: "Overhead cable extension" },
   ],
-  "Lower A": [
-    { id: "la1", name: "Leg Press", target: "Quads", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Hack squat machine" },
-    { id: "la2", name: "Seated Leg Curl", target: "Hamstrings", type: "isolation", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Lying leg curl" },
-    { id: "la3", name: "Leg Extension", target: "Quads", type: "isolation", sets: 3, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: false, alt: null },
-    { id: "la4", name: "Hip Thrust (machine/DB)", target: "Glutes", type: "isolation", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Cable pull-through" },
-    { id: "la5", name: "Calf Raise (standing)", target: "Calves", type: "isolation", sets: 3, reps: "12-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Seated calf raise" },
-    { id: "la6", name: "Abs (optional)", target: "Core", type: "isolation", sets: 3, reps: "15", rest: 53, restLabel: "45-60s", rpe: "-", priority: false, optional: true, alt: "Any ab exercise" },
-  ],
   "Upper B": [
     { id: "ub1", name: "Incline DB Press", target: "Upper chest", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Incline machine press" },
     { id: "ub2", name: "DB Lateral Raise", target: "Side delts", type: "isolation", sets: 4, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "8", priority: true, alt: "Cable or machine lateral raise" },
@@ -302,17 +294,23 @@ const PROGRAM = {
     { id: "ub7", name: "Biceps Curl (variation)", target: "Biceps", type: "isolation", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: null },
     { id: "ub8", name: "Triceps (overhead variation)", target: "Triceps", type: "isolation", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: null },
   ],
-  "Lower B": [
-    { id: "lb1", name: "Hack Squat Machine", target: "Quads", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Leg press, different foot placement than Lower A" },
-    { id: "lb2", name: "Lying Leg Curl", target: "Hamstrings", type: "isolation", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Seated leg curl" },
-    { id: "lb3", name: "DB Romanian Deadlift", target: "Hamstrings/glutes", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7", priority: false, alt: "Glute kickback machine / cable pull-through (zero hinge option)" },
-    { id: "lb4", name: "Leg Extension", target: "Quads", type: "isolation", sets: 2, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: false, alt: null },
-    { id: "lb5", name: "Calf Raise (seated)", target: "Calves", type: "isolation", sets: 3, reps: "12-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Standing calf raise" },
-    { id: "lb6", name: "Adductor/Abductor Machine", target: "Adductors", type: "isolation", sets: 2, reps: "15", rest: 53, restLabel: "45-60s", rpe: "6-7", priority: false, optional: true, alt: null },
+  // One combined leg day instead of Lower A/B — trades leg frequency (was 2x/week)
+  // for a single harder, higher-volume session, freeing more weekly capacity for
+  // upper body. Every muscle group from the old A/B split is still represented;
+  // it's the exercise *count* that's trimmed (not to 2x the old single-day volume)
+  // so this stays one hard session rather than a marathon of both old days back to back.
+  "Lower": [
+    { id: "lo1", name: "Hack Squat Machine", target: "Quads", type: "compound", sets: 4, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Leg press machine, different foot placement" },
+    { id: "lo2", name: "DB Romanian Deadlift", target: "Hamstrings/glutes", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7", priority: false, alt: "Glute kickback machine / cable pull-through (zero hinge option)" },
+    { id: "lo3", name: "Seated Leg Curl", target: "Hamstrings", type: "isolation", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Lying leg curl" },
+    { id: "lo4", name: "Leg Extension", target: "Quads", type: "isolation", sets: 3, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: false, alt: null },
+    { id: "lo5", name: "Hip Thrust (machine/DB)", target: "Glutes", type: "isolation", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Cable pull-through" },
+    { id: "lo6", name: "Calf Raise (standing)", target: "Calves", type: "isolation", sets: 3, reps: "12-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Seated calf raise" },
+    { id: "lo7", name: "Adductor/Abductor Machine", target: "Adductors", type: "isolation", sets: 2, reps: "15", rest: 53, restLabel: "45-60s", rpe: "6-7", priority: false, optional: true, alt: null },
   ],
 };
 
-const DAY_ORDER = ["Upper A", "Lower A", "Upper B", "Lower B"];
+const DAY_ORDER = ["Upper A", "Upper B", "Lower"];
 const PUMP_PRESETS = ["Band Pull-Aparts", "Light Face Pulls", "Light Cable Lateral Raise", "Light Lat Pulldown", "Easy Incline Walk"];
 
 // A browsable library of substitute exercises per muscle group, so swapping an

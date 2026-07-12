@@ -9,9 +9,18 @@ standalone training guide.
 
 ## Program structure
 
-A 4-day **Upper/Lower split**, rotated in order: `Upper A → Lower A → Upper B → Lower B`,
-then repeats. Each day hits every major muscle group twice a week — enough frequency for
-hypertrophy without needing 5-6 gym days.
+A 3-day rotation, `Upper A → Upper B → Lower`, then repeats. Upper body gets hit twice
+per rotation (via the A/B angle variants); lower body gets one combined, harder session
+instead of two lighter ones. This is a deliberate upper-body-priority trade, not the
+default — it swaps leg *frequency* for leg *density*: the `Lower` day exists to carry
+roughly what two lower-frequency sessions would, in one sitting, so total weekly leg
+volume doesn't just quietly get cut when frequency drops. Concretely it still hits
+quads (compound + isolation), hamstrings, glutes, calves, and adductors every rotation,
+just consolidated — expect it to run longer than a single Upper session (7 exercises,
+~21 sets vs. Upper's ~24 sets across 8, but back-to-back rather than split across two
+days). If someone wants leg growth prioritized instead, go back to a 4-day
+`Upper A → Lower A → Upper B → Lower B` split — that's the frequency-first default this
+was traded away from, not a broken configuration.
 
 - **A/B variants exist to vary the stimulus**, not to double the exercise count. Upper A
   and Upper B train the same muscles with different equipment/angles (e.g. Upper A's
@@ -19,9 +28,11 @@ hypertrophy without needing 5-6 gym days.
   angle or stability demand, which is its own mild variation stimulus across the week.
 - **Pump/Recovery** is a 5th, optional day type — light, high-rep, well short of failure
   (RPE 3-4). It's for extra frequency/blood flow on a day you don't want to add real
-  fatigue, not a real training day. It doesn't count in the A/B rotation.
+  fatigue, not a real training day. It doesn't count in the rotation.
 - Auto-advance (`index.html`'s day-rotation effect) always proposes the *next* day in
-  `DAY_ORDER` after your last lifting session — Pump/Recovery days don't shift it.
+  `DAY_ORDER` after your last lifting session — Pump/Recovery days don't shift it. This
+  means training frequency isn't hardcoded anywhere; whatever cadence you actually train
+  at, the app just proposes the next name in `DAY_ORDER` each time.
 
 ## The 24-week cycle
 
