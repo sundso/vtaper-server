@@ -106,10 +106,12 @@ a one-line call under "Last time" on the exercise card:
 
 This is the double-progression scheme already described in the phase table above
 ("reps first, then weight once you're at the top of the rep range") turned into a concrete
-per-exercise call instead of a general phase-level reminder. It goes silent during
-**Foundation** (technique focus, not chasing weight yet) and **Deload** (planned recovery,
-not a progression week) — both already say so via `phase.desc`/the deload banner, so the
-note would just be noise there. It only looks at last session's numbers, the same data
+per-exercise call instead of a general phase-level reminder. **Deload** suppresses the note
+entirely (planned recovery, not a progression week — the deload banner already says so).
+**Foundation** only suppresses the "add weight" call, since that's the one piece of advice
+that actually conflicts with "don't chase weight yet" — "hold/lower the weight" and "same
+weight, more reps" still surface there, since both are exactly the reps-based feedback a
+technique-focused phase needs too. It only looks at last session's numbers, the same data
 already used to pre-fill this session's inputs — it doesn't look further back in history.
 
 ## Priority exercises (★)

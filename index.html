@@ -175,6 +175,7 @@ html[data-theme="light"] .tracker-root {
 .tracker-trend-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .tracker-select { background: var(--panel-2); border: none; color: var(--text); padding: 8px 10px; border-radius: var(--radius-ctl); font-size: var(--text-sm); flex: 1; font-family: var(--font-body); }
 .tracker-empty-note { font-size: var(--text-sm); color: var(--text-muted); text-align: center; padding: 12px 0; }
+.tracker-week-group { display: flex; flex-direction: column; gap: 10px; }
 .tracker-week-group-head { font-family: var(--font-display); font-weight: var(--weight-black); font-size: var(--text-md); color: var(--text-muted); margin: 6px 2px 8px; text-transform: uppercase; letter-spacing: 0.4px; }
 .tracker-history-row { display: flex; justify-content: space-between; font-size: var(--text-sm); padding: 6px 0; border-bottom: 1px solid var(--panel-3); }
 .tracker-history-row:last-child { border-bottom: none; }
@@ -552,10 +553,12 @@ function parseRepRange(reps) {
 
 // Double-progression call: add weight once every set hits the top of the rep range,
 // hold/lower it if a set missed the bottom, otherwise keep chasing reps at the same
-// weight. Silent during Foundation (technique focus, not chasing weight yet, per
-// getPhaseInfo) and Deload (planned recovery, not a progression week).
+// weight. Fully silent during Deload (planned recovery, not a progression week). During
+// Foundation, only the "add weight" call is silenced — per getPhaseInfo's "don't chase
+// weight yet" — but "hold/lower" still surfaces, since that never conflicts with
+// Foundation's intent and is exactly the reps-based feedback that phase needs too.
 function getProgressionNote(effective, lastSession, phase) {
-  if (phase.deload || phase.name === "Foundation") return null;
+  if (phase.deload) return null;
   const range = parseRepRange(effective.reps);
   if (!range || !Array.isArray(lastSession)) return null;
   const [min, max] = range;
@@ -563,6 +566,7 @@ function getProgressionNote(effective, lastSession, phase) {
   if (loggedSets.length === 0) return null;
 
   if (loggedSets.every((s) => Number(s.reps) >= max)) {
+    if (phase.name === "Foundation") return null;
     return { type: "up", text: `Hit ${max}+ reps on every set last time — add weight this session.` };
   }
   if (loggedSets.some((s) => Number(s.reps) < min)) {
@@ -1837,7 +1841,7 @@ function App() {
           {liftingLogsDesc.length === 0 && <p className="tracker-empty-note">No sessions logged yet.</p>}
 
           {logsByWeek.map((group) => (
-            <div key={group.week}>
+            <div key={group.week} className="tracker-week-group">
               <div className="tracker-week-group-head">Week {group.week} · {group.phase}</div>
               {group.logs.map((log, i) => {
                 const key = log.id ?? log.date + i;
