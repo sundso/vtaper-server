@@ -1063,7 +1063,13 @@ function App() {
   // Unsaved workout entry (day + typed numbers) is stashed in localStorage so a
   // page refresh mid-session doesn't wipe what's already filled in. Cleared on save.
   const initialDraft = useMemo(() => loadJSON("vtaper_draft", {}), []);
-  const [dayType, setDayType] = useState(initialDraft.dayType || "Upper A");
+  // A saved draft can point at a day that no longer exists in PROGRAM (e.g. after
+  // the split changes) — fall back to a real day instead of crashing the render.
+  const [dayType, setDayType] = useState(
+    initialDraft.dayType === "Pump/Recovery" || DAY_ORDER.includes(initialDraft.dayType)
+      ? initialDraft.dayType
+      : "Upper A"
+  );
   const [values, setValues] = useState(initialDraft.values || {});
   // Exercises the user has explicitly marked "done" mid-session — lets them
   // collapse a finished exercise to focus on the next one without saving to
@@ -1610,6 +1616,8 @@ function App() {
                 <button className="tracker-add-row" onClick={() => setPumpRows([...pumpRows, { name: "", sets: "", reps: "" }])}><E size={13}>+</E> Add movement</button>
               </div>
             </div>
+          ) : !PROGRAM[dayType] ? (
+            <p className="tracker-empty-note">Unknown day "{dayType}" — pick a routine above.</p>
           ) : (
             PROGRAM[dayType].map((ex, idx) => {
               const variantId = altSelection[ex.id] || ex.id;
