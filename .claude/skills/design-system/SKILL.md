@@ -18,8 +18,8 @@ touching any UI.
 2. Never hardcode a hex color, border-radius, font, font-size, font-weight, or
    card/page padding — consume the matching `--bg`, `--panel*`, `--text*`,
    `--accent-*`, `--font-*`, `--text-{2xs,xs,sm,md,base,lg,xl,2xl}`,
-   `--weight-{semibold,bold,black}`, `--space-{card,page}`, or `--radius-*`
-   token.
+   `--weight-{semibold,bold,black}`, `--space-{card,page,section}`, or
+   `--radius-*` token.
 3. Numbers (reps, weights, set #, timers) use `--font-mono`; all other UI text
    uses `--font-body`.
 4. `--accent-primary` is the *only* primary color — don't introduce a second one.
@@ -28,16 +28,19 @@ touching any UI.
 5. Prefer background contrast (`--panel` / `--panel-2` / `--panel-3` +
    `--shadow-card`) over borders to separate surfaces.
 6. Card padding is `--space-card` (12px); page/section padding is
-   `--space-page` (16px). A card with no `.tracker-card-head` above its body
-   needs `.tracker-card-body-standalone` for top padding — don't inline a
-   `paddingTop`.
+   `--space-page` (16px); the gap *between* stacked sections (tabs, week
+   calendar, phase note, day-select, confirm panels) is `--space-section`
+   (14px) — give the section itself a `margin-bottom`, don't rely on a
+   conditionally-rendered sibling to provide the gap. A card with no
+   `.tracker-card-head` above its body needs `.tracker-card-body-standalone`
+   for top padding — don't inline a `paddingTop`.
 7. If nothing in the contract covers the shape/color/size you need, **add a
    new token** to the contract in `DESIGN_SYSTEM.md` (e.g. `--radius-xl`,
    `--accent-<role>`, a new `--text-*` rung) rather than inlining a raw value.
 8. New CSS classes for components are prefixed `tracker-`.
 9. The header (`.tracker-header`) is `position: sticky` — brand row, tabs,
    and the day-type select live there and stay pinned on scroll. The week
-   calendar and phase banner live in `.tracker-scroll-top` right below it and
+   calendar and phase note live in `.tracker-scroll-top` right below it and
    scroll away normally; don't move them back into the sticky header.
 10. `.tracker-root` must never get `overflow-x: hidden` (or any non-`visible`
     overflow) back — an ancestor with non-visible overflow silently breaks

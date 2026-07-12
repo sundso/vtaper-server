@@ -77,6 +77,7 @@ from one of these — never a raw `px` or numeric weight.
 |---|---|---|
 | `--space-page` | `16px` | Outer/section padding — header, body, sheets, banners |
 | `--space-card` | `12px` | Internal card padding — card head/body, confirm panels |
+| `--space-section` | `14px` | Vertical gap *between* stacked sections in the header/scroll-top area — tabs, week calendar, phase note, day-select, confirm panels. Not a card or page padding, it's the rhythm between blocks. |
 
 ### Shape
 | Token | Value | Role |
@@ -112,9 +113,15 @@ existing pictograms' style (24×24 viewBox, `currentColor`-independent stroke vi
 - **Type scale is semantic, not literal.** Pick a `--text-*` token by the role the text plays
   (body vs. caption vs. heading), not by eyeballing a pixel size. If nothing fits, add a new
   rung to the scale rather than inlining a size.
-- **Card padding is `--space-card` (12px), page/section padding is `--space-page` (16px).**
-  A card without a `.tracker-card-head` above its body needs `.tracker-card-body-standalone`
-  for top padding — don't inline a `paddingTop`.
+- **Card padding is `--space-card` (12px), page/section padding is `--space-page` (16px),
+  gap between stacked sections is `--space-section` (14px).** A card without a
+  `.tracker-card-head` above its body needs `.tracker-card-body-standalone` for top padding
+  — don't inline a `paddingTop`. A block that sits in the tabs/calendar/phase-note stack
+  (`.tracker-header`/`.tracker-scroll-top`) should own its own `margin-bottom:
+  var(--space-section)` rather than depending on a conditionally-rendered sibling for
+  spacing — `.tracker-tabs` not having this was exactly the bug that motivated adding this
+  token: the History/Body tabs had no gap below the tab bar because that gap was coming
+  from the Today-only day-select's margin, not from the tabs themselves.
 - **`--accent-primary` = the single primary color.** Active tabs, active day, primary buttons,
   focused inputs, chart line, set numbers all use it. Don't introduce a second "primary."
 - **`--accent-secondary` = highlight, not danger.** Warm-up cues, informational badges —
