@@ -93,6 +93,25 @@ compound lifts. If a compound movement still feels breath-limited rather than mu
 after this change, check breathing technique next (exhale on the hard part, don't hold a
 full breath through the whole set) before assuming it needs more programming changes.
 
+## Progression note (add/hold/lower weight)
+
+`getProgressionNote(effective, lastSession, phase)` in `index.html` reads last session's
+logged reps against the exercise's rep range (`effective.reps`, e.g. `"6-8"`) and surfaces
+a one-line call under "Last time" on the exercise card:
+
+- Every set hit the **top** of the range → "add weight this session" (`is-up`, success color).
+- Any set fell **below the bottom** of the range → "hold or lower the weight, focus on reps"
+  (`is-down`, danger color).
+- Otherwise still inside the range → "same weight, chase a rep or two more" (neutral/muted).
+
+This is the double-progression scheme already described in the phase table above
+("reps first, then weight once you're at the top of the rep range") turned into a concrete
+per-exercise call instead of a general phase-level reminder. It goes silent during
+**Foundation** (technique focus, not chasing weight yet) and **Deload** (planned recovery,
+not a progression week) — both already say so via `phase.desc`/the deload banner, so the
+note would just be noise there. It only looks at last session's numbers, the same data
+already used to pre-fill this session's inputs — it doesn't look further back in history.
+
 ## Priority exercises (★)
 
 `priority: true` marks the exercise(s) per day that matter most for visible progress —

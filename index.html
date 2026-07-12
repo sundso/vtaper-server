@@ -141,6 +141,9 @@ html[data-theme="light"] .tracker-root {
 .tracker-timer-reset { width: 44px; height: 44px; }
 .tracker-rest-label { font-size: var(--text-xs); color: var(--text-muted); }
 .tracker-lastsession { font-size: var(--text-xs); color: var(--text-muted); font-family: var(--font-mono); }
+.tracker-progression-note { font-size: var(--text-xs); line-height: 1.4; margin-top: 3px; color: var(--text-muted); }
+.tracker-progression-note.is-up { color: var(--accent-success); }
+.tracker-progression-note.is-down { color: var(--accent-danger); }
 .tracker-set-rows { display: flex; flex-direction: column; gap: 6px; }
 .tracker-set-row { display: grid; grid-template-columns: 28px 1fr 1fr; gap: 8px; align-items: center; }
 .tracker-set-row-head { font-size: var(--text-2xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
@@ -539,6 +542,35 @@ function getPhaseInfo(week) {
   return { name: "Repeat Cycle", rpe: "7-8", desc: "Restart at Progressive-Overload intensity. Rotate a stale exercise if needed.", deload: false };
 }
 
+// "6-8" -> [6,8]; a bare "15" -> [15,15]; anything unparseable -> null.
+function parseRepRange(reps) {
+  const parts = String(reps).split("-").map((n) => parseInt(n, 10));
+  if (parts.length === 2 && !Number.isNaN(parts[0]) && !Number.isNaN(parts[1])) return [parts[0], parts[1]];
+  const n = parseInt(reps, 10);
+  return Number.isNaN(n) ? null : [n, n];
+}
+
+// Double-progression call: add weight once every set hits the top of the rep range,
+// hold/lower it if a set missed the bottom, otherwise keep chasing reps at the same
+// weight. Silent during Foundation (technique focus, not chasing weight yet, per
+// getPhaseInfo) and Deload (planned recovery, not a progression week).
+function getProgressionNote(effective, lastSession, phase) {
+  if (phase.deload || phase.name === "Foundation") return null;
+  const range = parseRepRange(effective.reps);
+  if (!range || !Array.isArray(lastSession)) return null;
+  const [min, max] = range;
+  const loggedSets = lastSession.filter((s) => s && s.weight && s.reps);
+  if (loggedSets.length === 0) return null;
+
+  if (loggedSets.every((s) => Number(s.reps) >= max)) {
+    return { type: "up", text: `Hit ${max}+ reps on every set last time — add weight this session.` };
+  }
+  if (loggedSets.some((s) => Number(s.reps) < min)) {
+    return { type: "down", text: `Missed ${min} reps on a set last time — hold or lower the weight, focus on reps.` };
+  }
+  return { type: "hold", text: `Within range last time — same weight, chase a rep or two more.` };
+}
+
 function fmtDate(d) { return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); }
 // mm:ss for under an hour, h:mm:ss past that — used for both the running elapsed
 // clock and the estimated-remaining readout.
@@ -918,6 +950,7 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
   // swapping an isolation exercise for a compound library pick. Free-typed names
   // (no known type) just keep using the original exercise's target.
   const effective = (isCustom && customType && TYPE_DEFAULTS[customType]) ? TYPE_DEFAULTS[customType] : exercise;
+  const progressionNote = getProgressionNote(effective, lastSession, phase);
 
   return (
     <div className="tracker-card" style={{ opacity: !open && done ? 0.6 : 1 }}>
@@ -991,6 +1024,9 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
 
           {lastSession && (
             <div className="tracker-lastsession">Last time: {lastSession.map((s) => `${s.weight || "-"}×${s.reps || "-"}`).join("  ·  ")}</div>
+          )}
+          {progressionNote && (
+            <div className={`tracker-progression-note is-${progressionNote.type}`}>{progressionNote.text}</div>
           )}
 
           <div className="tracker-set-rows">
