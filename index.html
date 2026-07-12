@@ -88,7 +88,7 @@ body { margin: 0; background: #000; overflow-x: hidden; }
 .tracker-tabs { display: flex; gap: 4px; background: var(--panel-2); border-radius: var(--radius-pill); padding: 4px; }
 .tracker-tab { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 9px 0; font-size: var(--text-md); font-weight: var(--weight-semibold); cursor: pointer; border-radius: var(--radius-pill); font-family: var(--font-body); }
 .tracker-tab.active { color: #fff; background: var(--accent-primary); }
-.tracker-body { padding: var(--space-page); display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
+.tracker-body { padding: var(--space-page); display: flex; flex-direction: column; gap: 10px; padding-bottom: 140px; }
 .tracker-day-select { width: 100%; background: var(--panel-2); border: var(--border-w) solid transparent; color: var(--text); padding: var(--space-card) 40px var(--space-card) var(--space-page); border-radius: var(--radius-ctl); font-size: var(--text-base); font-weight: var(--weight-bold); font-family: var(--font-body); margin: 14px 0; }
 .tracker-day-select:focus { border-color: var(--accent-primary); outline: none; }
 .tracker-card { background: var(--panel); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-card); }
@@ -141,8 +141,13 @@ body { margin: 0; background: #000; overflow-x: hidden; }
 }
 .tracker-done-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .tracker-done-btn-undo { background: var(--panel-2); color: var(--text-muted); }
-.tracker-save-btn { position: sticky; bottom: 12px; }
+.tracker-session-bar {
+  position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%);
+  width: calc(100% - 32px); max-width: 448px; z-index: 20;
+}
 .tracker-session-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.tracker-session-actions { display: flex; gap: 8px; }
+.tracker-session-actions > button { flex: 1; width: auto; margin: 0; }
 .tracker-session-elapsed { font-family: var(--font-mono); font-size: var(--text-xl); font-weight: var(--weight-bold); color: var(--text); }
 .tracker-session-label { font-size: var(--text-2xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
 .tracker-pump-note { font-size: var(--text-sm); color: var(--text-muted); line-height: 1.5; }
@@ -1641,34 +1646,6 @@ function App() {
 
       {tab === "today" && (
         <div className="tracker-body">
-          <div className="tracker-card">
-            <div className="tracker-card-body tracker-card-body-standalone">
-              {workoutStart ? (
-                <>
-                  <div className="tracker-session-row">
-                    <div>
-                      <div className="tracker-session-elapsed">{fmtDuration((now - workoutStart) / 1000)}</div>
-                      <div className="tracker-session-label">elapsed</div>
-                    </div>
-                    {remainingWorkoutSeconds != null && (
-                      <div style={{ textAlign: "right" }}>
-                        <div className="tracker-session-elapsed">{fmtClock(now + remainingWorkoutSeconds * 1000)}</div>
-                        <div className="tracker-session-label">est. finish · {fmtDuration(remainingWorkoutSeconds)} left</div>
-                      </div>
-                    )}
-                  </div>
-                  <button className="tracker-done-btn tracker-done-btn-undo" onClick={() => setWorkoutStart(null)}>
-                    <E size={13}>⏹</E> Stop Workout
-                  </button>
-                </>
-              ) : (
-                <button className="tracker-primary-btn" style={{ margin: 0 }} onClick={() => setWorkoutStart(Date.now())}>
-                  <E size={14}>▶</E> Start Workout
-                </button>
-              )}
-            </div>
-          </div>
-
           {dayType === "Pump/Recovery" ? (
             <div className="tracker-card">
               <div className="tracker-card-body tracker-card-body-standalone">
@@ -1741,9 +1718,38 @@ function App() {
             })
           )}
 
-          <button className="tracker-primary-btn tracker-save-btn" onClick={dayType === "Pump/Recovery" ? savePumpDay : saveWorkout}>
-            {saved ? <><E size={15}>✓</E> Saved</> : "Save Workout"}
-          </button>
+          <div className="tracker-card tracker-session-bar">
+            <div className="tracker-card-body tracker-card-body-standalone">
+              {workoutStart && (
+                <div className="tracker-session-row">
+                  <div>
+                    <div className="tracker-session-elapsed">{fmtDuration((now - workoutStart) / 1000)}</div>
+                    <div className="tracker-session-label">elapsed</div>
+                  </div>
+                  {remainingWorkoutSeconds != null && (
+                    <div style={{ textAlign: "right" }}>
+                      <div className="tracker-session-elapsed">{fmtClock(now + remainingWorkoutSeconds * 1000)}</div>
+                      <div className="tracker-session-label">est. finish · {fmtDuration(remainingWorkoutSeconds)} left</div>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="tracker-session-actions">
+                {workoutStart ? (
+                  <button className="tracker-done-btn tracker-done-btn-undo" onClick={() => setWorkoutStart(null)}>
+                    <E size={13}>⏹</E> Stop
+                  </button>
+                ) : (
+                  <button className="tracker-done-btn tracker-done-btn-undo" onClick={() => setWorkoutStart(Date.now())}>
+                    <E size={13}>▶</E> Start
+                  </button>
+                )}
+                <button className="tracker-primary-btn" style={{ margin: 0 }} onClick={dayType === "Pump/Recovery" ? savePumpDay : saveWorkout}>
+                  {saved ? <><E size={15}>✓</E> Saved</> : "Save Workout"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
