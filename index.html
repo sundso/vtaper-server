@@ -146,9 +146,14 @@ html[data-theme="light"] .tracker-root {
 .tracker-progression-note.is-up { color: var(--accent-success); }
 .tracker-progression-note.is-down { color: var(--accent-danger); }
 .tracker-set-rows { display: flex; flex-direction: column; gap: 6px; }
-.tracker-set-row { display: grid; grid-template-columns: 28px 1fr 1fr; gap: 8px; align-items: center; }
+.tracker-set-block { display: flex; flex-direction: column; gap: 6px; }
+.tracker-set-row { display: grid; grid-template-columns: 28px 1fr 1fr 30px; gap: 8px; align-items: center; }
 .tracker-set-row-head { font-size: var(--text-2xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .tracker-set-num { font-family: var(--font-mono); color: var(--accent-primary); font-size: var(--text-md); }
+.tracker-set-check { width: 30px; height: 30px; border-radius: var(--radius-pill); border: none; background: var(--panel-2); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.tracker-set-check:disabled { opacity: 0.3; cursor: not-allowed; }
+.tracker-set-check.is-checked { background: var(--accent-success); color: #fff; }
+.tracker-set-rest { padding-left: 36px; }
 .tracker-input { background: var(--panel-2); border: var(--border-w) solid transparent; color: var(--text); padding: 9px 10px; border-radius: var(--radius-ctl); font-size: var(--text-md); font-family: var(--font-mono); width: 100%; }
 .tracker-input:focus { outline: none; border-color: var(--accent-primary); }
 .tracker-done-btn {
@@ -857,7 +862,7 @@ const RestAudio = (() => {
   return { start, blip };
 })();
 
-function RestTimer({ seconds, label }) {
+function RestTimer({ seconds, label, autoStart, onFinish }) {
   const [remaining, setRemaining] = useState(seconds);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
@@ -884,6 +889,7 @@ function RestTimer({ seconds, label }) {
         new Notification(title, { body, tag: "rest-timer" });
       }
     } catch (e) {}
+    if (onFinish) onFinish();
   };
 
   // Derive remaining from the target timestamp so the display self-corrects
@@ -926,6 +932,11 @@ function RestTimer({ seconds, label }) {
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [running]);
+
+  // autoStart timers (per-set rest, rest-before-next-exercise) are only ever mounted
+  // at the moment they should start counting down, so a mount-only effect is enough —
+  // no need for a separate "trigger" value to watch.
+  useEffect(() => { if (autoStart) start(); }, []);
 
   // `seconds` can change after mount — e.g. swapping to a library substitute with a
   // different compound/isolation rest target. Only apply it while idle so we never
@@ -986,16 +997,32 @@ function MuscleGroupPicker({ muscleGroup, onSelect, onClose }) {
   );
 }
 
-function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst, altOptions, selectedVariantId, onSelectVariant, customName, onCustomNameChange, customType, onCustomPick, done, onToggleDone, isCurrent }) {
+function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst, isLast, altOptions, selectedVariantId, onSelectVariant, customName, onCustomNameChange, customType, onCustomPick, done, onToggleDone, isCurrent, restingVariantId }) {
   // Only the current (first not-yet-done) exercise in the day starts open — everything
   // else starts collapsed, so a long day reads as a focused one-at-a-time list instead of
-  // a wall of open input forms. Whenever this card *becomes* the current one (the previous
-  // exercise just got marked done), it auto-expands — see the effect below. Manually
-  // opening/closing after that always wins; the effect only fires on that transition.
+  // a wall of open input forms. Whenever this card *becomes* the current one, it
+  // auto-expands — but only once any pending rest-before-next-exercise timer (for
+  // whichever exercise was just finished) has actually run out; otherwise the next
+  // card would pop open the instant Done is tapped, before you've rested at all.
+  const isResting = restingVariantId === selectedVariantId;
+  const blockAutoAdvance = restingVariantId != null;
   const [open, setOpen] = useState(isCurrent);
-  useEffect(() => { if (isCurrent) setOpen(true); }, [isCurrent]);
+  useEffect(() => { if (isCurrent && !blockAutoAdvance) setOpen(true); }, [isCurrent, blockAutoAdvance]);
+  // Mirrors the open effect above from the other end: this card stays open through
+  // its own post-done rest period (isResting) and only collapses on the falling edge
+  // — the moment resting actually finishes, not the moment Done was tapped.
+  const wasRestingRef = useRef(false);
+  useEffect(() => {
+    if (wasRestingRef.current && !isResting && done) setOpen(false);
+    wasRestingRef.current = isResting;
+  }, [isResting, done]);
   const [showRamp, setShowRamp] = useState(false);
   const [browsingLibrary, setBrowsingLibrary] = useState(false);
+  // Per-set "checked" state drives the inline between-set rest timer — local/ephemeral
+  // (not persisted like values/doneExercises) since it's just pacing, not logged data.
+  // Reset on a variant swap since a different exercise's sets haven't been checked yet.
+  const [checkedSets, setCheckedSets] = useState({});
+  useEffect(() => { setCheckedSets({}); }, [selectedVariantId]);
   const extraSet = phase.name === "Volume Phase" && exercise.priority;
   const totalSets = extraSet ? exercise.sets + 1 : exercise.sets;
   const isCustom = selectedVariantId === customVariantId(exercise.id);
@@ -1078,8 +1105,6 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
             </div>
           )}
 
-          <RestTimer seconds={effective.rest} label={effective.restLabel} />
-
           {lastSession && (
             <div className="tracker-lastsession">Last time: {lastSession.map((s) => `${s.weight || "-"}×${s.reps || "-"}`).join("  ·  ")}</div>
           )}
@@ -1089,27 +1114,44 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
 
           <div className="tracker-set-rows">
             <div className="tracker-set-row tracker-set-row-head"><span>Set</span><span>Weight</span><span>Reps</span></div>
-            {Array.from({ length: totalSets }).map((_, i) => (
-              <div className="tracker-set-row" key={i}>
-                <span className="tracker-set-num">{i + 1}</span>
-                <input type="number" inputMode="decimal" min="0"
-                  placeholder={lastSession?.[i]?.weight ? String(lastSession[i].weight) : "kg"}
-                  value={values?.[i]?.weight ?? ""}
-                  onChange={(e) => onChange(selectedVariantId, i, "weight", e.target.value)}
-                  className="tracker-input" />
-                <input type="number" inputMode="numeric" min="0"
-                  placeholder={lastSession?.[i]?.reps ? String(lastSession[i].reps) : "reps"}
-                  value={values?.[i]?.reps ?? ""}
-                  onChange={(e) => onChange(selectedVariantId, i, "reps", e.target.value)}
-                  className="tracker-input" />
-              </div>
-            ))}
+            {Array.from({ length: totalSets }).map((_, i) => {
+              const filled = !!(values?.[i]?.weight && values?.[i]?.reps);
+              const checked = !!checkedSets[i];
+              return (
+                <div className="tracker-set-block" key={i}>
+                  <div className="tracker-set-row">
+                    <span className="tracker-set-num">{i + 1}</span>
+                    <input type="number" inputMode="decimal" min="0"
+                      placeholder={lastSession?.[i]?.weight ? String(lastSession[i].weight) : "kg"}
+                      value={values?.[i]?.weight ?? ""}
+                      onChange={(e) => onChange(selectedVariantId, i, "weight", e.target.value)}
+                      className="tracker-input" />
+                    <input type="number" inputMode="numeric" min="0"
+                      placeholder={lastSession?.[i]?.reps ? String(lastSession[i].reps) : "reps"}
+                      value={values?.[i]?.reps ?? ""}
+                      onChange={(e) => onChange(selectedVariantId, i, "reps", e.target.value)}
+                      className="tracker-input" />
+                    <button type="button" className={`tracker-set-check ${checked ? "is-checked" : ""}`}
+                      disabled={!filled}
+                      onClick={() => setCheckedSets((prev) => ({ ...prev, [i]: !prev[i] }))}
+                      title={checked ? "Checked — tap to undo" : filled ? "Check set, start rest" : "Enter weight & reps first"}>
+                      <E size={14}>✓</E>
+                    </button>
+                  </div>
+                  {checked && i < totalSets - 1 && (
+                    <div className="tracker-set-rest">
+                      <RestTimer seconds={effective.rest} label={effective.restLabel} autoStart />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <button
             className={`tracker-done-btn ${done ? "tracker-done-btn-undo" : ""}`}
             disabled={!done && !hasAnyData}
-            onClick={() => { onToggleDone(); if (!done) setOpen(false); }}
+            onClick={() => { const wasDone = done; onToggleDone(); if (!wasDone && isLast) setOpen(false); }}
           >
             {done ? <><E size={14}>↺</E> Mark not done</> : <><E size={14}>✓</E> Done — collapse</>}
           </button>
@@ -1218,6 +1260,11 @@ function App() {
   // collapse a finished exercise to focus on the next one without saving to
   // history yet; the actual save still happens once, for the whole day, below.
   const [doneExercises, setDoneExercises] = useState(initialDraft.doneExercises || {});
+  // variantId of the exercise currently in its post-Done "rest before next exercise"
+  // countdown, or null when nothing's resting. Gates the next card's auto-open and the
+  // just-finished card's auto-collapse until the rest timer actually finishes — not
+  // persisted, since a page refresh mid-rest just resumes with everything expanded.
+  const [restingVariantId, setRestingVariantId] = useState(null);
   // Session stopwatch: timestamp the workout was started, or null when stopped.
   // Persisted in the draft so a refresh mid-workout doesn't reset the clock.
   const [workoutStart, setWorkoutStart] = useState(initialDraft.workoutStart || null);
@@ -1933,7 +1980,9 @@ function App() {
                     values={values[variantId]}
                     onChange={handleChange}
                     isFirst={idx === 0}
+                    isLast={isLast}
                     isCurrent={idx === firstUndoneIdx}
+                    restingVariantId={restingVariantId}
                     altOptions={ALT_OPTIONS[ex.id] || []}
                     selectedVariantId={variantId}
                     onSelectVariant={(vid) => selectVariant(ex.id, vid)}
@@ -1950,13 +1999,22 @@ function App() {
                       setCustomAltTypes((prev) => ({ ...prev, [ex.id]: type }));
                     }}
                     done={done}
-                    onToggleDone={() => toggleExerciseDone(variantId)}
+                    onToggleDone={() => {
+                      toggleExerciseDone(variantId);
+                      setRestingVariantId((prev) => {
+                        if (!done && !isLast) return variantId; // just marked done -> start the gate
+                        if (done && prev === variantId) return null; // undone mid-rest -> clear it
+                        return prev;
+                      });
+                    }}
                   />
                   {done && !isLast && (
                     <div className="tracker-card tracker-info-card">
                       <div className="tracker-card-body tracker-card-body-standalone">
                         <div className="tracker-info-title"><E size={14}><span style={{ color: "var(--accent-secondary)" }}>⏱</span></E>Rest before next exercise</div>
-                        <RestTimer seconds={effective.rest} label={effective.restLabel} />
+                        <RestTimer seconds={effective.rest} label={effective.restLabel}
+                          autoStart={restingVariantId === variantId}
+                          onFinish={() => setRestingVariantId((prev) => (prev === variantId ? null : prev))} />
                       </div>
                     </div>
                   )}
