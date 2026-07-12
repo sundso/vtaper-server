@@ -15,10 +15,13 @@ instead of two lighter ones. This is a deliberate upper-body-priority trade, not
 default — it swaps leg *frequency* for leg *density*: the `Lower` day exists to carry
 roughly what two lower-frequency sessions would, in one sitting, so total weekly leg
 volume doesn't just quietly get cut when frequency drops. Concretely it still hits
-quads (compound + isolation), hamstrings, glutes, calves, and adductors every rotation,
-just consolidated — expect it to run longer than a single Upper session (7 exercises,
-~21 sets vs. Upper's ~24 sets across 8, but back-to-back rather than split across two
-days). If someone wants leg growth prioritized instead, go back to a 4-day
+quads (compound + isolation), hamstrings, calves, and adductors every rotation, just
+consolidated — expect it to run longer than a single Upper session (6 exercises,
+~18 sets vs. Upper's ~24 sets across 8, but back-to-back rather than split across two
+days). **Glutes have no dedicated exercise on purpose** — they only get worked as a
+secondary mover on the DB Romanian Deadlift, not their own isolation slot, per an
+explicit preference for covering the muscle without deliberately growing it. If someone
+wants leg growth prioritized instead, go back to a 4-day
 `Upper A → Lower A → Upper B → Lower B` split — that's the frequency-first default this
 was traded away from, not a broken configuration.
 
