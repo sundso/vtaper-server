@@ -222,4 +222,11 @@ signal `type` is standing in for.
 
 | `target` values in use |
 |---|
-| Upper chest · Side delts · Rear delts · Lats · Upper back · Biceps · Triceps · Quads · Hamstrings · Glutes · Calves · Core · Adductors |
+| Upper chest · Chest · Side delts · Rear delts · Lats · Upper back · Biceps · Triceps · Quads · Hamstrings · Glutes · Calves · Core · Adductors |
+
+**`Chest`** (sternal/mid-lower head) is deliberately separate from **`Upper chest`**
+(clavicular head, incline-biased). The program was 100% incline chest work until Upper B's
+`ub3` became Dips (Forward Lean) — every other chest exercise in `PROGRAM` targets upper
+chest, so without this split the program would have zero direct mid/lower-chest stimulus.
+When adding chest exercises, tag flat/decline/dip-style movements `Chest` and incline-style
+movements `Upper chest` — don't collapse them back into one category.

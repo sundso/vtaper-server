@@ -283,6 +283,7 @@ const getExerciseIcon = (name = "", target = "") => {
   if (/reverse-grip bench|close-grip bench/.test(n)) return "press-flat";
   const byTarget = {
     "Upper chest": "press-incline",
+    "Chest": "press-flat",
     "Side delts": "lateral-raise",
     "Rear delts": "rear-delt",
     "Lats": "pulldown",
@@ -314,7 +315,7 @@ const PROGRAM = {
   "Upper B": [
     { id: "ub1", name: "Incline DB Press", target: "Upper chest", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Incline machine press" },
     { id: "ub2", name: "Machine Lateral Raise", target: "Side delts", type: "isolation", sets: 4, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "8", priority: true, alt: "DB lateral raise / cable lateral raise" },
-    { id: "ub3", name: "Incline Smith / 2nd Angle Press", target: "Upper chest", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Low-to-high cable fly" },
+    { id: "ub3", name: "Dips (Forward Lean)", target: "Chest", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Machine chest press / weighted dip variation" },
     { id: "ub4", name: "Lat Pulldown (Different Grip)", target: "Lats", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Pull-up / assisted pull-up" },
     { id: "ub5", name: "Chest-Supported Row (Different Angle)", target: "Upper back", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Single-arm DB row" },
     { id: "ub6", name: "Face Pull", target: "Rear delts", type: "isolation", sets: 3, reps: "15-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Rear delt fly" },
@@ -358,6 +359,17 @@ const EXERCISE_LIBRARY = {
     { name: "Reverse-Grip Bench Press", equipment: "Barbell", score: 3, type: "compound" },
     { name: "Landmine Press", equipment: "Barbell", score: 3, type: "compound" },
     { name: "Single-Arm Incline Cable Press", equipment: "Cable", score: 3, type: "compound" },
+  ],
+  // Mid/lower chest (sternal head) — separate from "Upper chest" since the program was
+  // entirely incline-biased until this slot. See GYM_KNOWLEDGE.md.
+  "Chest": [
+    { name: "Flat DB Press", equipment: "Dumbbell", score: 5, type: "compound" },
+    { name: "Flat Barbell Press", equipment: "Barbell", score: 4, type: "compound" },
+    { name: "Weighted Dip (Forward Lean)", equipment: "Bodyweight/Plate", score: 4, type: "compound" },
+    { name: "Machine Chest Press", equipment: "Machine", score: 4, type: "compound" },
+    { name: "Decline Barbell Press", equipment: "Barbell", score: 3, type: "compound" },
+    { name: "Cable Crossover", equipment: "Cable", score: 4, type: "isolation" },
+    { name: "Flat DB Fly", equipment: "Dumbbell", score: 3, type: "isolation" },
   ],
   "Side delts": [
     { name: "Lean-Away Cable Lateral Raise", equipment: "Cable", score: 5, type: "isolation" },
