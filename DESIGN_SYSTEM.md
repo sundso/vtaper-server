@@ -4,13 +4,21 @@ The app is skinned entirely through **CSS custom properties (design tokens)** de
 on `.tracker-root` in `index.html`. Every surface reads from tokens — never a raw hex,
 radius, or font — so the whole app stays visually consistent as it grows.
 
-There is a **single theme**: a dark, color-blocked look inspired by modern fitness-app UI —
-near-black canvas, bold rounded cards, a saturated purple primary, pill-shaped buttons and
-nav, and a small set of semantic accent colors instead of literal color names.
+There are **two themes** — dark (default) and light — switched via a `data-theme` attribute
+on `<html>`. Both share the same color-blocked look inspired by modern fitness-app UI: bold
+rounded cards, a saturated purple primary, pill-shaped buttons and nav, and a small set of
+semantic accent colors instead of literal color names. The accent colors (`--accent-*`) and
+avatar colors are identical across both themes — only canvas/surface/ink flip.
 
 ```
-.tracker-root   ← the entire token contract + values (no data-theme switching)
+.tracker-root                              ← dark token values (default)
+html[data-theme="light"] .tracker-root     ← light token overrides
+html[data-theme="light"] body              ← body backdrop outside the 480px column
 ```
+
+Theme is toggled from the header (sun/moon button), persisted to `localStorage`
+(`vtaper_theme`), and applied pre-paint by a small inline `<script>` in `<head>` so there's
+no flash of the wrong theme on load.
 
 ---
 
@@ -19,20 +27,20 @@ nav, and a small set of semantic accent colors instead of literal color names.
 Components only ever reference these names — never a raw hex, radius, or font.
 
 ### Color
-| Token | Value | Role |
-|---|---|---|
-| `--bg` | `#000000` | App canvas behind everything |
-| `--panel` | `#17171b` | Primary surface (cards, header) |
-| `--panel-2` | `#1f1f25` | Recessed surface (inputs, chips, tab track) |
-| `--panel-3` | `#2c2c33` | Tertiary fills, dividers |
-| `--text` | `#f5f5f7` | Primary text / ink |
-| `--text-muted` | `#8d8d96` | Secondary text, captions |
-| `--accent-primary` | `#8b7ff5` | **Primary** — active states, links, primary buttons, numbers |
-| `--accent-secondary` | `#f3a94e` | Highlight/informational — warm-up cues, "+1 set" badges |
-| `--accent-success` | `#3ecf8e` | Success / "done" (save toast, completed timer) |
-| `--accent-danger` | `#ff5c72` | Destructive / error / deload signal |
-| `--avatar-bg` | `#e8e8ec` | Light circle behind exercise movement icons — the one deliberate light surface against the dark canvas |
-| `--avatar-fg` | `#17171b` | Stroke/fill of the movement icon on `--avatar-bg` |
+| Token | Dark | Light | Role |
+|---|---|---|---|
+| `--bg` | `#000000` | `#f5f5f7` | App canvas behind everything |
+| `--panel` | `#17171b` | `#ffffff` | Primary surface (cards, header) |
+| `--panel-2` | `#1f1f25` | `#eceef2` | Recessed surface (inputs, chips, tab track) |
+| `--panel-3` | `#2c2c33` | `#e0e2e8` | Tertiary fills, dividers |
+| `--text` | `#f5f5f7` | `#17171b` | Primary text / ink |
+| `--text-muted` | `#8d8d96` | `#6b6b76` | Secondary text, captions |
+| `--accent-primary` | `#8b7ff5` | same | **Primary** — active states, links, primary buttons, numbers |
+| `--accent-secondary` | `#f3a94e` | same | Highlight/informational — warm-up cues, "+1 set" badges |
+| `--accent-success` | `#3ecf8e` | same | Success / "done" (save toast, completed timer) |
+| `--accent-danger` | `#ff5c72` | same | Destructive / error / deload signal |
+| `--avatar-bg` | `#e8e8ec` | same | Light circle behind exercise movement icons — the one deliberate light surface against the dark canvas; stays light in light theme too, since it just needs to read as a distinct surface from `--panel` |
+| `--avatar-fg` | `#17171b` | same | Stroke/fill of the movement icon on `--avatar-bg` |
 
 ### Type
 | Token | Value | Role |
@@ -77,7 +85,7 @@ from one of these — never a raw `px` or numeric weight.
 | `--radius-ctl` | `14px` | Inputs, selects, small controls |
 | `--radius-pill` | `999px` | Buttons, day chips, nav, badges |
 | `--border-w` | `1px` | Reserved for focus rings — most surfaces are borderless, separated by color/elevation instead |
-| `--shadow-card` | `0 10px 30px rgba(0,0,0,0.45)` | Card elevation off the black canvas |
+| `--shadow-card` | dark `0 10px 30px rgba(0,0,0,0.45)` / light `0 10px 24px rgba(23,23,27,0.10)` | Card elevation off the canvas — lighter/softer in light theme since a heavy black shadow reads wrong on a white canvas |
 
 ### Exercise movement icons
 
@@ -118,6 +126,12 @@ existing pictograms' style (24×24 viewBox, `currentColor`-independent stroke vi
   (e.g. `rgba(243,169,78,0.12)` for a secondary-accent card) rather than a colored border.
 - If a new surface needs a shape not covered, add a *new token* to the contract rather than
   inlining a value — e.g. `--radius-xl` if something needs to be rounder than a card.
+- **Theme overrides only touch canvas/surface/ink** (`--bg`, `--panel*`, `--text*`,
+  `--shadow-card`) in the `html[data-theme="light"] .tracker-root` block — never fork
+  `--accent-*` or `--avatar-*` per theme, and never add a per-theme override outside that one
+  block (or `html[data-theme="light"] body` for the backdrop). Any hardcoded `rgba(255,255,255,…)`
+  / `rgba(0,0,0,…)` on top of an accent-colored surface (e.g. phase banner text, modal backdrop)
+  is intentional and theme-independent — it sits on a fixed accent color, not the canvas.
 
 ## Extending the palette
 

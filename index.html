@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<script>
+  try {
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("vtaper_theme") === "light" ? "light" : "dark");
+  } catch (e) {}
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>V-Taper Log</title>
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -16,12 +21,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 * { box-sizing: border-box; }
 body { margin: 0; background: #000; overflow-x: hidden; }
+html[data-theme="light"] body { background: #f5f5f7; }
 
 /* ============================================================
    DESIGN SYSTEM — TOKEN CONTRACT
-   One dark theme. Every surface reads from these variables —
-   never hardcode a color, radius, or font in a component.
-   See DESIGN_SYSTEM.md for the full spec.
+   Dark (default) + light theme, switched via [data-theme] on <html>.
+   Every surface reads from these variables — never hardcode a color,
+   radius, or font in a component. See DESIGN_SYSTEM.md for the full spec.
    ============================================================ */
 .tracker-root {
   /* -- color -- */
@@ -44,6 +50,12 @@ body { margin: 0; background: #000; overflow-x: hidden; }
 
   background: var(--bg); color: var(--text); font-family: var(--font-body);
   min-height: 100vh; max-width: 480px; margin: 0 auto;
+}
+/* Light theme — same accent/semantic colors, canvas/surface/ink swapped for light. */
+html[data-theme="light"] .tracker-root {
+  --bg: #f5f5f7; --panel: #ffffff; --panel-2: #eceef2; --panel-3: #e0e2e8;
+  --text: #17171b; --text-muted: #6b6b76;
+  --shadow-card: 0 10px 24px rgba(23,23,27,0.10);
 }
 .tracker-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .tracker-emoji { line-height: 1; display: inline-block; }
@@ -1071,6 +1083,14 @@ function WeekCalendar({ startDate, logs, viewWeek, onChangeWeek }) {
 }
 
 function App() {
+  const [theme, setTheme] = useState(() => (localStorage.getItem("vtaper_theme") === "light" ? "light" : "dark"));
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try { localStorage.setItem("vtaper_theme", theme); } catch (e) {}
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = theme === "light" ? "#f5f5f7" : "#000000";
+  }, [theme]);
+
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
   const [loginUsername, setLoginUsername] = useState("");
@@ -1590,6 +1610,9 @@ function App() {
         <div className="tracker-header-top">
           <div className="tracker-brand"><E size={18}>🏋</E><span>V-Taper Log</span></div>
           <div style={{ display: "flex", gap: 6 }}>
+            <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>
+              <E size={19}>{theme === "dark" ? "☀️" : "🌙"}</E>
+            </button>
             <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={exportData} title="Export backup"><E size={19}>⬇</E></button>
             <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={() => setConfirmingReset(true)} title="Reset all data"><E size={19}>↺</E></button>
             <button className="tracker-icon-btn tracker-icon-btn-lg" onClick={() => setConfirmingLogout(true)} title="Log out"><E size={19}>⏻</E></button>

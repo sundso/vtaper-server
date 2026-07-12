@@ -1,8 +1,8 @@
 # V-Taper Log
 
 Single-file React (CDN + Babel standalone) PWA workout tracker in `index.html`, backed by a
-small API (`src/`). Styling is a **token-based design system** — one dark theme, no theme
-switching.
+small API (`src/`). Styling is a **token-based design system** — dark (default) and light
+themes, switched via `data-theme` on `<html>` and a header toggle.
 
 ## Design system — READ BEFORE ANY UI WORK
 

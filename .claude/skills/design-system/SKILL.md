@@ -5,9 +5,11 @@ description: Use before writing or reviewing ANY UI/CSS change in index.html —
 
 # Design System
 
-V-Taper Log has one dark theme, driven entirely by CSS custom-property tokens
-declared once on `.tracker-root` in `index.html`. Read the full contract in
-[DESIGN_SYSTEM.md](../../../DESIGN_SYSTEM.md) before touching any UI.
+V-Taper Log has dark (default) and light themes, driven entirely by CSS
+custom-property tokens declared once on `.tracker-root` in `index.html` and
+overridden per-theme via `html[data-theme="light"] .tracker-root`. Read the
+full contract in [DESIGN_SYSTEM.md](../../../DESIGN_SYSTEM.md) before
+touching any UI.
 
 ## Before writing UI code
 
@@ -41,9 +43,17 @@ declared once on `.tracker-root` in `index.html`. Read the full contract in
     overflow) back — an ancestor with non-visible overflow silently breaks
     `position: sticky` for everything inside it. The horizontal clip lives on
     `body` instead, where overflow propagates to the viewport.
+11. Theme (dark/light) lives in exactly two places: the `.tracker-root` token
+    block (dark values) and `html[data-theme="light"] .tracker-root` right
+    after it (light overrides), plus `html[data-theme="light"] body` for the
+    backdrop outside the 480px column. Only `--bg`, `--panel*`, `--text*`, and
+    `--shadow-card` differ per theme — never fork `--accent-*` or `--avatar-*`.
+    Don't add `data-theme` selectors anywhere else.
 
 ## After writing UI code
 
 Grep the diff for raw hex codes (`#[0-9a-fA-F]{3,6}`), raw `px` font-sizes/
 padding on cards or pages, numeric `font-weight` values, and literal
-font-family names outside the token declarations — any hit is a bug.
+font-family names outside the token declarations — any hit is a bug, except
+inside the two theme-token blocks described in rule 11 (that's where hex
+values belong).
