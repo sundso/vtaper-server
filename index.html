@@ -1294,7 +1294,14 @@ function App() {
 
   const week = useMemo(() => {
     if (!startDate) return 1;
-    const days = Math.floor((Date.now() - new Date(startDate).getTime()) / 86400000);
+    // Calendar-day difference, not raw elapsed milliseconds — otherwise the week only
+    // rolls over at whatever time of day the program happened to start (e.g. started at
+    // 12:36pm on the 5th means the week still reads "1" until 12:36pm on the 12th, even
+    // though a full 7 calendar days have already passed). Zero both dates to local
+    // midnight first, same as WeekCalendar already does for its own day math.
+    const start = new Date(startDate); start.setHours(0, 0, 0, 0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const days = Math.round((today - start) / 86400000);
     return Math.max(1, Math.floor(days / 7) + 1);
   }, [startDate]);
 
