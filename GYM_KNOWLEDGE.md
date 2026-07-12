@@ -54,6 +54,17 @@ by then the base is already built.
 | 20-24 | Consolidation | 7-8 | Reassess — compare photos and strength logs against week 1. This is the checkpoint, not just more of the same. |
 | 25+ | Repeat Cycle | 7-8 | Back to Progressive-Overload intensity. Good point to rotate out an exercise that's gone stale (diminishing returns, boredom, an injury niggle). |
 
+**Two separate week numbers drive `index.html`**, and it matters which one feeds what:
+`week` (real, computed from `startDate` + today's date) and `viewWeek` (whatever week the
+calendar strip's ‹ › chevrons are currently browsing — starts synced to `week`, then moves
+independently). `phase = getPhaseInfo(week)` is the one true source for anything that
+actually governs today's session — exercise-card RPE (`getDisplayRpe`), the Volume Phase
+extra-set, the progression note, and what gets tagged on a saved log. `viewPhase =
+getPhaseInfo(viewWeek)` only feeds the phase banner/note directly under the calendar strip,
+so browsing forward to preview a future week shows *that* week's phase copy — without ever
+touching what the exercise cards below actually use to compute targets or what a save
+writes to the log.
+
 ## Set / rep / RPE / rest conventions
 
 Every `PROGRAM` exercise carries `sets`, `reps`, `rpe`, `rest` (seconds, drives the rest

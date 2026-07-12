@@ -103,7 +103,11 @@ html[data-theme="light"] .tracker-root {
 .tracker-tab { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 9px 0; font-size: var(--text-md); font-weight: var(--weight-semibold); cursor: pointer; border-radius: var(--radius-pill); font-family: var(--font-body); }
 .tracker-tab.active { color: #fff; background: var(--accent-primary); }
 .tracker-body { padding: var(--space-page); display: flex; flex-direction: column; gap: 10px; padding-bottom: 140px; }
-.tracker-day-select { width: 100%; background: var(--panel-2); border: var(--border-w) solid transparent; color: var(--text); padding: var(--space-card) 40px var(--space-card) var(--space-page); border-radius: var(--radius-ctl); font-size: var(--text-base); font-weight: var(--weight-bold); font-family: var(--font-body); margin: 14px 0; }
+.tracker-select-wrap { position: relative; flex: 1; }
+.tracker-select-wrap::after { content: "▾"; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: var(--text-lg); line-height: 1; pointer-events: none; }
+.tracker-day-select-wrap { position: relative; margin: 14px 0; }
+.tracker-day-select-wrap::after { content: "▾"; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: var(--text-lg); line-height: 1; pointer-events: none; }
+.tracker-day-select { width: 100%; appearance: none; -webkit-appearance: none; background: var(--panel-2); border: var(--border-w) solid transparent; color: var(--text); padding: var(--space-card) 32px var(--space-card) var(--space-page); border-radius: var(--radius-ctl); font-size: var(--text-base); font-weight: var(--weight-bold); font-family: var(--font-body); }
 .tracker-day-select:focus { border-color: var(--accent-primary); outline: none; }
 .tracker-card { background: var(--panel); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-card); }
 .tracker-card-head { width: 100%; background: transparent; border: none; color: var(--text); padding: var(--space-card) var(--space-page); display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-align: left; }
@@ -173,7 +177,7 @@ html[data-theme="light"] .tracker-root {
 .tracker-preset-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .tracker-preset-chip { background: var(--panel-2); border: none; color: var(--text-muted); padding: 6px 12px; border-radius: var(--radius-pill); font-size: var(--text-xs); cursor: pointer; font-family: var(--font-body); }
 .tracker-trend-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.tracker-select { background: var(--panel-2); border: none; color: var(--text); padding: 8px 10px; border-radius: var(--radius-ctl); font-size: var(--text-sm); flex: 1; font-family: var(--font-body); }
+.tracker-select { width: 100%; appearance: none; -webkit-appearance: none; background: var(--panel-2); border: none; color: var(--text); padding: 8px 26px 8px 10px; border-radius: var(--radius-ctl); font-size: var(--text-sm); font-family: var(--font-body); }
 .tracker-empty-note { font-size: var(--text-sm); color: var(--text-muted); text-align: center; padding: 12px 0; }
 .tracker-week-group { display: flex; flex-direction: column; gap: 10px; }
 .tracker-week-group-head { font-family: var(--font-display); font-weight: var(--weight-black); font-size: var(--text-md); color: var(--text-muted); margin: 6px 2px 8px; text-transform: uppercase; letter-spacing: 0.4px; }
@@ -992,11 +996,13 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
           <div className="tracker-alt-row">
             <E size={12}>⇄</E>
             {exercise.alt ? (
-              <select className="tracker-select" value={selectedVariantId} onChange={(e) => onSelectVariant(e.target.value)}>
-                <option value={exercise.id}>{exercise.name} (main)</option>
-                {altOptions.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                <option value={customVariantId(exercise.id)}>Other (type your own)</option>
-              </select>
+              <div className="tracker-select-wrap">
+                <select className="tracker-select" value={selectedVariantId} onChange={(e) => onSelectVariant(e.target.value)}>
+                  <option value={exercise.id}>{exercise.name} (main)</option>
+                  {altOptions.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  <option value={customVariantId(exercise.id)}>Other (type your own)</option>
+                </select>
+              </div>
             ) : (
               <div className="tracker-alt-row-label">{displayName}</div>
             )}
@@ -1279,6 +1285,12 @@ function App() {
   }, [week, startDate]);
 
   const phase = getPhaseInfo(week);
+  // The phase note/banner sits directly under the week calendar and reads as a
+  // description of whichever week you're currently browsing there — so it tracks
+  // viewWeek, not the real program week. Everything that actually governs today's
+  // targets (exercise cards' RPE/extra-set/progression note, and what gets logged)
+  // stays on the real `phase` above; only this display follows the chevrons.
+  const viewPhase = getPhaseInfo(viewWeek);
 
   // Estimated seconds left in today's session: for every not-yet-done exercise,
   // (remaining sets) x (execution time + that exercise's rest). Sets already typed
@@ -1701,26 +1713,28 @@ function App() {
         </div>
 
         {tab === "today" && (
-          <select className="tracker-day-select" value={dayType} onChange={(e) => setDayType(e.target.value)}>
-            {[...DAY_ORDER, "Pump/Recovery"].map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
+          <div className="tracker-day-select-wrap">
+            <select className="tracker-day-select" value={dayType} onChange={(e) => setDayType(e.target.value)}>
+              {[...DAY_ORDER, "Pump/Recovery"].map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
         )}
       </div>
 
       <div className="tracker-scroll-top">
         <WeekCalendar startDate={startDate} logs={logs} viewWeek={viewWeek} onChangeWeek={(w) => setViewWeek(Math.max(1, w))} />
 
-        {phase.name === "Foundation" ? (
+        {viewPhase.name === "Foundation" ? (
           <div className="tracker-phase-note">
-            {phase.desc} <span className="tracker-phase-note-rpe">Target RPE {phase.rpe}</span>
+            {viewPhase.desc} <span className="tracker-phase-note-rpe">Target RPE {viewPhase.rpe}</span>
           </div>
         ) : (
-          <div className={`tracker-phase-banner ${phase.deload ? "is-deload" : ""}`}>
-            <div className="tracker-phase-name">{phase.name}</div>
-            <div className="tracker-phase-desc">{phase.desc}</div>
-            <div className="tracker-phase-rpe">Target RPE {phase.rpe}</div>
+          <div className={`tracker-phase-banner ${viewPhase.deload ? "is-deload" : ""}`}>
+            <div className="tracker-phase-name">{viewPhase.name}</div>
+            <div className="tracker-phase-desc">{viewPhase.desc}</div>
+            <div className="tracker-phase-rpe">Target RPE {viewPhase.rpe}</div>
           </div>
         )}
       </div>
@@ -1840,9 +1854,11 @@ function App() {
             <div className="tracker-card-body tracker-card-body-standalone">
               <div className="tracker-trend-head">
                 <E size={14}><span style={{ color: "var(--accent-primary)" }}>📈</span></E>
-                <select className="tracker-select" value={trendExercise} onChange={(e) => setTrendExercise(e.target.value)}>
-                  {trendableOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-                </select>
+                <div className="tracker-select-wrap">
+                  <select className="tracker-select" value={trendExercise} onChange={(e) => setTrendExercise(e.target.value)}>
+                    {trendableOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                  </select>
+                </div>
               </div>
               <MiniLineChart data={trendData} />
             </div>
