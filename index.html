@@ -93,7 +93,6 @@ html[data-theme="light"] .tracker-root {
 .tracker-weekcal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-success); }
 .tracker-weekcal-day.is-today .tracker-weekcal-dot { background: #fff; }
 .tracker-phase-banner { background: linear-gradient(135deg, var(--accent-primary), #6f61e8); border-radius: var(--radius-card); padding: var(--space-page); margin-bottom: 14px; box-shadow: var(--shadow-card); }
-.tracker-phase-banner.is-deload { background: linear-gradient(135deg, var(--accent-danger), #e6435c); }
 .tracker-phase-name { font-family: var(--font-display); font-weight: var(--weight-black); font-size: var(--text-xl); color: #fff; }
 .tracker-phase-desc { font-size: var(--text-sm); color: rgba(255,255,255,0.85); margin-top: 4px; line-height: 1.4; }
 .tracker-phase-rpe { font-family: var(--font-mono); font-size: var(--text-xs); color: rgba(255,255,255,0.75); margin-top: 8px; }
@@ -705,10 +704,7 @@ function ShareCard({ log, bg }) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {stats.items.map((it, i) => (
-            <div key={i}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: c.text }}>{it.name}</div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: c.muted, marginTop: 1 }}>{it.detail}</div>
-            </div>
+            <div key={i} style={{ fontSize: 13, fontWeight: 700, color: c.text }}>{it.name}</div>
           ))}
         </div>
         <div style={{ fontSize: 10, color: c.muted, textAlign: "center", marginTop: 4 }}>Generated with V-Taper Log</div>
@@ -1726,12 +1722,12 @@ function App() {
       <div className="tracker-scroll-top">
         <WeekCalendar startDate={startDate} logs={logs} viewWeek={viewWeek} onChangeWeek={(w) => setViewWeek(Math.max(1, w))} />
 
-        {viewPhase.name === "Foundation" ? (
+        {viewPhase.name === "Foundation" || viewPhase.deload ? (
           <div className="tracker-phase-note">
             {viewPhase.desc} <span className="tracker-phase-note-rpe">Target RPE {viewPhase.rpe}</span>
           </div>
         ) : (
-          <div className={`tracker-phase-banner ${viewPhase.deload ? "is-deload" : ""}`}>
+          <div className="tracker-phase-banner">
             <div className="tracker-phase-name">{viewPhase.name}</div>
             <div className="tracker-phase-desc">{viewPhase.desc}</div>
             <div className="tracker-phase-rpe">Target RPE {viewPhase.rpe}</div>

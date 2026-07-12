@@ -38,7 +38,7 @@ Components only ever reference these names — never a raw hex, radius, or font.
 | `--accent-primary` | `#8b7ff5` | same | **Primary** — active states, links, primary buttons, numbers |
 | `--accent-secondary` | `#f3a94e` | same | Highlight/informational — warm-up cues, "+1 set" badges |
 | `--accent-success` | `#3ecf8e` | same | Success / "done" (save toast, completed timer) |
-| `--accent-danger` | `#ff5c72` | same | Destructive / error / deload signal |
+| `--accent-danger` | `#ff5c72` | same | Destructive / error / corrective (progression note's "lower weight" call) |
 | `--avatar-bg` | `#e8e8ec` | same | Light circle behind exercise movement icons — the one deliberate light surface against the dark canvas; stays light in light theme too, since it just needs to read as a distinct surface from `--panel` |
 | `--avatar-fg` | `#17171b` | same | Stroke/fill of the movement icon on `--avatar-bg` |
 
@@ -119,8 +119,9 @@ existing pictograms' style (24×24 viewBox, `currentColor`-independent stroke vi
   focused inputs, chart line, set numbers all use it. Don't introduce a second "primary."
 - **`--accent-secondary` = highlight, not danger.** Warm-up cues, informational badges —
   things worth noticing but not destructive.
-- **`--accent-danger` = destructive/error only.** Reset, logout confirm, delete, login error,
-  deload banner.
+- **`--accent-danger` = destructive/error only.** Reset, logout confirm, delete, login error.
+  The progression note's "hold/lower weight" call also uses it — a corrective signal, not
+  destructive, but the closest fit among the four accents.
 - **Cards are mostly borderless.** Distinguish surfaces with `--panel`/`--panel-2`/`--panel-3`
   background contrast and `--shadow-card`, not borders. Reach for a tinted background
   (e.g. `rgba(243,169,78,0.12)` for a secondary-accent card) rather than a colored border.
