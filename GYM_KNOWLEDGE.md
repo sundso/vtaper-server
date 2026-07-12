@@ -26,9 +26,12 @@ wants leg growth prioritized instead, go back to a 4-day
 was traded away from, not a broken configuration.
 
 - **A/B variants exist to vary the stimulus**, not to double the exercise count. Upper A
-  and Upper B train the same muscles with different equipment/angles (e.g. Upper A's
-  Incline Machine Press vs. Upper B's Incline DB Press) — same target, different joint
-  angle or stability demand, which is its own mild variation stimulus across the week.
+  and Upper B mostly train the same muscles with different equipment/angles (e.g. Upper
+  A's Low-to-High Cable Fly vs. Upper B's Incline Smith Press) — same target, different
+  joint angle or stability demand, which is its own mild variation stimulus across the
+  week. **Exception, by explicit choice**: upper chest (both days: Incline DB Press) and
+  side delts (both days: Machine Lateral Raise) no longer vary between A and B — an
+  equipment/preference call, not an oversight. Everything else in the split still varies.
 - **Pump/Recovery** is a 5th, optional day type — light, high-rep, well short of failure
   (RPE 3-4). It's for extra frequency/blood flow on a day you don't want to add real
   fatigue, not a real training day. It doesn't count in the rotation.
@@ -139,6 +142,21 @@ that actually conflicts with "don't chase weight yet" — "hold/lower the weight
 weight, more reps" still surface there, since both are exactly the reps-based feedback a
 technique-focused phase needs too. It only looks at last session's numbers, the same data
 already used to pre-fill this session's inputs — it doesn't look further back in history.
+
+### "Last time" is tracked per exercise name, not per day/slot
+
+`lastSessionByName` in `index.html` (feeding both the pre-fill effect and every
+`ExerciseCard`'s `lastSession`) matches by the exercise's **resolved display name** across
+*all* logs, regardless of which day type or program slot logged it. Concretely: Upper A's
+Incline DB Press and Upper B's Incline DB Press are the same name, so hitting "Save
+Workout" on either day updates the "last time" and progression-note numbers the other day
+sees too — same weight scale, same movement, no reason to track it twice. This also means
+promoting an alt into a different slot's main exercise (or renaming a slot to match what
+was already being logged as a custom substitute) inherits that history automatically,
+since the lookup only cares about the name, not the id it happened to be logged under.
+The one place this *doesn't* apply is the trend chart's exercise picker (`trendableOptions`
+/ `trendData`), which is still id-scoped — an exercise that exists under two different
+program ids shows as two separate trend-able entries there.
 
 ## Priority exercises (★)
 

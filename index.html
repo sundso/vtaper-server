@@ -302,8 +302,8 @@ const getExerciseIcon = (name = "", target = "") => {
 
 const PROGRAM = {
   "Upper A": [
-    { id: "ua1", name: "Incline Machine Press", target: "Upper chest", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Incline DB press" },
-    { id: "ua2", name: "Cable Lateral Raise", target: "Side delts", type: "isolation", sets: 4, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "8", priority: true, alt: "DB lateral raise / machine lateral raise" },
+    { id: "ua1", name: "Incline DB Press", target: "Upper chest", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Incline machine press" },
+    { id: "ua2", name: "Machine Lateral Raise", target: "Side delts", type: "isolation", sets: 4, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "8", priority: true, alt: "Cable lateral raise / DB lateral raise" },
     { id: "ua3", name: "Low-to-High Cable Fly", target: "Upper chest", type: "isolation", sets: 3, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: true, alt: "Incline pec-deck" },
     { id: "ua4", name: "Lat Pulldown", target: "Lats", type: "compound", sets: 4, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Assisted pull-up / straight-arm pulldown" },
     { id: "ua5", name: "Chest-Supported Row", target: "Upper back", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Seated cable row / machine row" },
@@ -313,13 +313,13 @@ const PROGRAM = {
   ],
   "Upper B": [
     { id: "ub1", name: "Incline DB Press", target: "Upper chest", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Incline machine press" },
-    { id: "ub2", name: "DB Lateral Raise", target: "Side delts", type: "isolation", sets: 4, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "8", priority: true, alt: "Cable or machine lateral raise" },
+    { id: "ub2", name: "Machine Lateral Raise", target: "Side delts", type: "isolation", sets: 4, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "8", priority: true, alt: "DB lateral raise / cable lateral raise" },
     { id: "ub3", name: "Incline Smith / 2nd Angle Press", target: "Upper chest", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Low-to-high cable fly" },
-    { id: "ub4", name: "Pull-Up / Assisted Pull-Up", target: "Lats", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Lat pulldown, different grip than Upper A" },
-    { id: "ub5", name: "Single-Arm DB Row", target: "Upper back", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Chest-supported row, different angle" },
+    { id: "ub4", name: "Lat Pulldown (Different Grip)", target: "Lats", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: true, alt: "Pull-up / assisted pull-up" },
+    { id: "ub5", name: "Chest-Supported Row (Different Angle)", target: "Upper back", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Single-arm DB row" },
     { id: "ub6", name: "Face Pull", target: "Rear delts", type: "isolation", sets: 3, reps: "15-20", rest: 60, restLabel: "60s", rpe: "7-8", priority: false, alt: "Rear delt fly" },
-    { id: "ub7", name: "Biceps Curl (variation)", target: "Biceps", type: "isolation", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: null },
-    { id: "ub8", name: "Triceps (overhead variation)", target: "Triceps", type: "isolation", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: null },
+    { id: "ub7", name: "Cable Hammer Curl", target: "Biceps", type: "isolation", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: null },
+    { id: "ub8", name: "Overhead Triceps Extension", target: "Triceps", type: "isolation", sets: 2, reps: "10-12", rest: 60, restLabel: "60s", rpe: "7", priority: false, alt: null },
   ],
   // One combined leg day instead of Lower A/B — trades leg frequency (was 2x/week)
   // for a single harder, higher-volume session, freeing more weekly capacity for
@@ -327,7 +327,7 @@ const PROGRAM = {
   // secondary mover on the RDL, not their own exercise, since the goal here is
   // covering the muscle without deliberately growing it.
   "Lower": [
-    { id: "lo1", name: "Hack Squat Machine", target: "Quads", type: "compound", sets: 4, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Leg press machine, different foot placement" },
+    { id: "lo1", name: "Leg Press Machine", target: "Quads", type: "compound", sets: 4, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7-8", priority: false, alt: "Hack squat machine" },
     { id: "lo2", name: "DB Romanian Deadlift", target: "Hamstrings/glutes", type: "compound", sets: 3, reps: "6-8", rest: 135, restLabel: "2-2.5min", rpe: "7", priority: false, alt: "Glute kickback machine / cable pull-through (zero hinge option)" },
     { id: "lo3", name: "Seated Leg Curl", target: "Hamstrings", type: "isolation", sets: 3, reps: "10-15", rest: 90, restLabel: "90s", rpe: "7-8", priority: false, alt: "Lying leg curl" },
     { id: "lo4", name: "Leg Extension", target: "Quads", type: "isolation", sets: 3, reps: "12-15", rest: 68, restLabel: "60-75s", rpe: "7-8", priority: false, alt: null },
@@ -1335,11 +1335,27 @@ function App() {
     }
   };
 
-  const lastSessionFor = (dt, exerciseId) => {
-    const matches = logs.filter((l) => l.dayType === dt && l.exercises?.[exerciseId]);
-    if (matches.length === 0) return null;
-    return matches[matches.length - 1].exercises[exerciseId];
-  };
+  // Most recent logged sets per exercise NAME across every day/log — not scoped to a
+  // single day-type or slot id, so an exercise that appears in more than one day (or
+  // gets promoted from an alt into a different day's main slot) shares "last time" and
+  // progression tracking instead of starting over. Logs are ordered ascending by date,
+  // so later entries simply overwrite earlier ones in the map.
+  const lastSessionByName = useMemo(() => {
+    const map = {};
+    logs.forEach((log) => {
+      if (!log.exercises) return;
+      Object.entries(log.exercises).forEach(([id, sets]) => {
+        if (id === "__meta") return;
+        map[resolveExerciseName(id, log.exercises.__meta?.names)] = sets;
+      });
+    });
+    return map;
+  }, [logs]);
+  const lastSessionFor = (name) => lastSessionByName[name] || null;
+  // A variant id's current display name — same rule ExerciseCard uses for its title:
+  // the typed name for a custom slot, otherwise the catalog name for main/alt ids.
+  const displayNameFor = (mainId, variantId) =>
+    variantId === customVariantId(mainId) ? (customAltNames[mainId] || "Custom substitute") : resolveExerciseName(variantId);
 
   // Pre-fill this day's inputs with last time's numbers, so you're adjusting instead of retyping from scratch.
   // Seeds whichever variant (main/alt/custom) is currently selected for each exercise slot.
@@ -1356,7 +1372,7 @@ function App() {
       PROGRAM[dayType].forEach((ex) => {
         const vid = altSelection[ex.id] || ex.id;
         if (next[vid] && next[vid].length) return;
-        const last = lastSessionFor(dayType, vid);
+        const last = lastSessionFor(displayNameFor(ex.id, vid));
         if (last) next[vid] = last.map((s) => ({ weight: s.weight ?? "", reps: s.reps ?? "" }));
       });
       return next;
@@ -1370,7 +1386,7 @@ function App() {
     setAltSelection((prev) => ({ ...prev, [mainId]: variantId }));
     setValues((prev) => {
       if (prev[variantId]) return prev;
-      const last = lastSessionFor(dayType, variantId);
+      const last = lastSessionFor(displayNameFor(mainId, variantId));
       if (!last) return prev;
       return { ...prev, [variantId]: last.map((s) => ({ weight: s.weight ?? "", reps: s.reps ?? "" })) };
     });
@@ -1765,7 +1781,7 @@ function App() {
                   <ExerciseCard
                     exercise={ex}
                     phase={phase}
-                    lastSession={lastSessionFor(dayType, variantId)}
+                    lastSession={lastSessionFor(displayNameFor(ex.id, variantId))}
                     values={values[variantId]}
                     onChange={handleChange}
                     isFirst={idx === 0}
