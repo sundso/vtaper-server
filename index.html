@@ -553,6 +553,18 @@ function resolveExerciseName(id, namesMap) {
   return id;
 }
 
+// Calendar-day week number for any given date against the program's start date —
+// shared by the live "week" counter and History's grouping so both always agree,
+// and so correcting startDate (the edit-start-date panel) immediately reflows every
+// already-logged session's displayed week instead of leaving old groupings stale.
+function weekForDate(startDate, dateLike) {
+  if (!startDate) return 1;
+  const start = new Date(startDate); start.setHours(0, 0, 0, 0);
+  const d = new Date(dateLike); d.setHours(0, 0, 0, 0);
+  const days = Math.round((d - start) / 86400000);
+  return Math.max(1, Math.floor(days / 7) + 1);
+}
+
 function getPhaseInfo(week) {
   if (week <= 4) return { name: "Foundation", rpe: "6-7", desc: "Learn the exercises, groove technique. Don't chase weight yet.", deload: false };
   if (week <= 8) return { name: "Progressive Overload", rpe: "7-8", desc: "Add reps, then weight — beat last session on something.", deload: false };
@@ -692,8 +704,10 @@ const SHARE_BG = {
   transparent: { card: "transparent", text: "#f5f5f7", muted: "#c9c9d1", stat: "rgba(255,255,255,0.10)", accent: "#8b7ff5" },
 };
 
-function ShareCard({ log, bg }) {
+function ShareCard({ log, bg, startDate }) {
   const c = SHARE_BG[bg];
+  const liveWeek = weekForDate(startDate, log.date);
+  const livePhase = getPhaseInfo(liveWeek).name;
   const stats = computeLogStats(log);
   const statBoxStyle = { background: c.stat, borderRadius: 16, padding: "10px 14px", flex: 1 };
   const statLabelStyle = { fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: c.muted };
@@ -714,7 +728,7 @@ function ShareCard({ log, bg }) {
         </div>
         <div>
           <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: 24, color: c.text }}>{log.dayType}</div>
-          <div style={{ fontSize: 12, color: c.muted, marginTop: 2 }}>{fmtDate(log.date)} · Week {log.week} · {log.phase}</div>
+          <div style={{ fontSize: 12, color: c.muted, marginTop: 2 }}>{fmtDate(log.date)} · Week {liveWeek} · {livePhase}</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           {stats.kind === "lift" ? (
@@ -1301,18 +1315,7 @@ function App() {
     setBodyStats([]);
   };
 
-  const week = useMemo(() => {
-    if (!startDate) return 1;
-    // Calendar-day difference, not raw elapsed milliseconds — otherwise the week only
-    // rolls over at whatever time of day the program happened to start (e.g. started at
-    // 12:36pm on the 5th means the week still reads "1" until 12:36pm on the 12th, even
-    // though a full 7 calendar days have already passed). Zero both dates to local
-    // midnight first, same as WeekCalendar already does for its own day math.
-    const start = new Date(startDate); start.setHours(0, 0, 0, 0);
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const days = Math.round((today - start) / 86400000);
-    return Math.max(1, Math.floor(days / 7) + 1);
-  }, [startDate]);
+  const week = useMemo(() => weekForDate(startDate, new Date()), [startDate]);
 
   // What week the calendar strip is showing — separate from the live program
   // `week` above so paging with the chevrons doesn't get yanked back. Synced to
@@ -1698,18 +1701,24 @@ function App() {
 
   // History reads much faster grouped by program week than as one long flat
   // list — each log already carries the week it was logged under.
+  // Grouped by week/phase recomputed live from each log's date against the current
+  // startDate — not the log.week/log.phase stamped in at save time — so correcting a
+  // drifted start date (the edit-start-date panel) immediately reflows History instead
+  // of leaving old sessions grouped under whatever was true before the correction.
   const logsByWeek = useMemo(() => {
     const groups = [];
     let current = null;
     liftingLogsDesc.forEach((log) => {
-      if (!current || current.week !== log.week) {
-        current = { week: log.week, phase: log.phase, logs: [] };
+      const liveWeek = weekForDate(startDate, log.date);
+      const livePhase = getPhaseInfo(liveWeek).name;
+      if (!current || current.week !== liveWeek) {
+        current = { week: liveWeek, phase: livePhase, logs: [] };
         groups.push(current);
       }
       current.logs.push(log);
     });
     return groups;
-  }, [logs]);
+  }, [logs, startDate]);
 
   // The first not-yet-done exercise in today's list is "current" — the one that starts
   // open, guiding a one-at-a-time flow through the day. Computed once per render rather
@@ -1777,7 +1786,7 @@ function App() {
               <button className="tracker-icon-btn" onClick={() => setSharingLog(null)}><E size={13}>✕</E></button>
             </div>
             <div className={`tracker-share-preview-wrap tracker-share-preview-${shareBg}`}>
-              <div ref={shareCardRef}><ShareCard log={sharingLog} bg={shareBg} /></div>
+              <div ref={shareCardRef}><ShareCard log={sharingLog} bg={shareBg} startDate={startDate} /></div>
             </div>
             <div className="tracker-share-bg-row">
               {["light", "dark", "transparent"].map((b) => (
