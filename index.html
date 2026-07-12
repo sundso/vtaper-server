@@ -607,6 +607,12 @@ function getProgressionNote(effective, lastSession, phase) {
 }
 
 function fmtDate(d) { return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); }
+// YYYY-MM-DD in *local* calendar terms, for pre-filling a native <input type="date">.
+// toISOString() would shift the date by the UTC offset and silently pick the wrong day.
+function toDateInputValue(d) {
+  const dt = new Date(d);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+}
 // mm:ss for under an hour, h:mm:ss past that — used for both the running elapsed
 // clock and the estimated-remaining readout.
 function fmtDuration(totalSeconds) {
@@ -1103,7 +1109,7 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
 // 24-week program squeezed into tiny bars — you can actually see *which* days
 // you trained. viewWeek is independent from the live program week so chevron
 // navigation doesn't fight the auto-computed "current week."
-function WeekCalendar({ startDate, logs, viewWeek, onChangeWeek }) {
+function WeekCalendar({ startDate, logs, viewWeek, onChangeWeek, onEditStartDate }) {
   const cycleLen = 24;
   const cycleWeek = ((viewWeek - 1) % cycleLen) + 1;
   const cycleNum = Math.floor((viewWeek - 1) / cycleLen) + 1;
@@ -1136,6 +1142,7 @@ function WeekCalendar({ startDate, logs, viewWeek, onChangeWeek }) {
         <div className="tracker-weekcal-caption">
           Week {cycleWeek} of {cycleLen}{cycleNum > 1 ? ` · Cycle ${cycleNum}` : ""}{isDeload ? " · Deload" : ""}
         </div>
+        <button className="tracker-icon-btn" onClick={onEditStartDate} title="Edit program start date"><E size={12}>✎</E></button>
         <button className="tracker-icon-btn" onClick={() => onChangeWeek(viewWeek + 1)} title="Next week"><E size={14}>›</E></button>
       </div>
       <div className="tracker-weekcal-row">
@@ -1219,6 +1226,8 @@ function App() {
   const [pumpRows, setPumpRows] = useState(initialDraft.pumpRows || [{ name: "", sets: "", reps: "" }]);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [editingStartDate, setEditingStartDate] = useState(false);
+  const [startDateInput, setStartDateInput] = useState("");
   const [confirmingDeleteLog, setConfirmingDeleteLog] = useState(null);
   const [sharingLog, setSharingLog] = useState(null);
   const [shareBg, setShareBg] = useState("dark");
@@ -1371,6 +1380,24 @@ function App() {
       setStartDate(today);
     } catch (err) {
       setDataError(err.message || "Couldn't start the program");
+    }
+  };
+
+  // Lets a drifted program start date (e.g. an accidental re-onboard) be corrected
+  // without wiping logged history the way resetAll() would — only meta.start_date
+  // changes, so week/phase math realigns but every saved session stays exactly as
+  // logged (that data is frozen at its own week/phase, by design — see saveWorkout).
+  const saveStartDate = async () => {
+    if (!startDateInput) return;
+    const iso = new Date(startDateInput + "T00:00:00").toISOString();
+    setDataError("");
+    try {
+      await apiFetch("/api/meta", token, { method: "POST", body: JSON.stringify({ startDate: iso }) });
+      setStartDate(iso);
+      setEditingStartDate(false);
+      showToast("Start date updated");
+    } catch (err) {
+      setDataError(err.message || "Couldn't update the start date");
     }
   };
 
@@ -1823,7 +1850,31 @@ function App() {
       </div>
 
       <div className="tracker-scroll-top">
-        <WeekCalendar startDate={startDate} logs={logs} viewWeek={viewWeek} onChangeWeek={(w) => setViewWeek(Math.max(1, w))} />
+        <WeekCalendar
+          startDate={startDate}
+          logs={logs}
+          viewWeek={viewWeek}
+          onChangeWeek={(w) => setViewWeek(Math.max(1, w))}
+          onEditStartDate={() => { setStartDateInput(toDateInputValue(startDate)); setEditingStartDate(true); }}
+        />
+
+        {editingStartDate && (
+          <div className="tracker-card" style={{ marginBottom: "var(--space-section)" }}>
+            <div className="tracker-card-body tracker-card-body-standalone">
+              <p className="tracker-confirm-text">
+                Program start date — change this if week/phase drifted from what you actually
+                started on. Every already-logged session keeps the week/phase it was saved
+                with; this only realigns the live counter and future saves.
+              </p>
+              <input type="date" className="tracker-input" value={startDateInput}
+                onChange={(e) => setStartDateInput(e.target.value)} style={{ marginBottom: 10 }} />
+              <div className="tracker-confirm-actions">
+                <button className="tracker-confirm-cancel" onClick={() => setEditingStartDate(false)}>Cancel</button>
+                <button className="tracker-primary-btn" style={{ flex: 1, width: "auto", margin: 0 }} onClick={saveStartDate}>Save</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="tracker-phase-note">
           <span className="tracker-phase-note-name">{phase.name}</span> — {phase.desc}{" "}
