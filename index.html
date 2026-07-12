@@ -543,6 +543,16 @@ function getPhaseInfo(week) {
   return { name: "Repeat Cycle", rpe: "7-8", desc: "Restart at Progressive-Overload intensity. Rotate a stale exercise if needed.", deload: false };
 }
 
+// The RPE badge on an exercise card tracks the *phase's* target effort, not a fixed
+// per-exercise number — periodization is the point, so it should move with the phase.
+// Intensification (wk 15-18) is the one phase where effort isn't uniform: only priority
+// (★) exercises push the last set to 8-9, everything else holds a normal 7-8 with reps
+// in reserve. See GYM_KNOWLEDGE.md.
+function getDisplayRpe(exercise, phase) {
+  if (phase.name === "Intensification") return exercise.priority ? "8-9 last set" : "7-8";
+  return phase.rpe;
+}
+
 // "6-8" -> [6,8]; a bare "15" -> [15,15]; anything unparseable -> null.
 function parseRepRange(reps) {
   const parts = String(reps).split("-").map((n) => parseInt(n, 10));
@@ -968,7 +978,7 @@ function ExerciseCard({ exercise, phase, lastSession, values, onChange, isFirst,
               {displayName}
             </div>
             <div className="tracker-card-sub">
-              {exercise.target} · {totalSets}×{effective.reps} · RPE {exercise.rpe}
+              {exercise.target} · {totalSets}×{effective.reps} · RPE {getDisplayRpe(exercise, phase)}
               {extraSet && <span className="tracker-badge">+1 set this phase</span>}
               {isFirst && <span className="tracker-badge tracker-badge-ramp">warm-up first</span>}
             </div>

@@ -78,7 +78,14 @@ timer), and `restLabel` (display string). Rough conventions used throughout:
   abs. Not a hard rule — the timer is a floor, not a ceiling; if you need longer, take it.
 - **RPE (Rate of Perceived Exertion)**: how many reps you'd have left in the tank at the
   top set. RPE 7 ≈ 3 reps left, RPE 8 ≈ 2 left, RPE 9 ≈ 1 left. The app's target RPE per
-  phase (table above) is the intensity dial across the whole cycle.
+  phase (table above) is the intensity dial across the whole cycle. **The RPE badge shown
+  on an exercise card is phase-driven** (`getDisplayRpe(exercise, phase)` in `index.html`
+  — returns `phase.rpe` for every phase except Intensification, where only priority
+  exercises get "8-9 last set" and everything else holds "7-8"), not the static `rpe` each
+  `PROGRAM` entry carries. That per-exercise `rpe` field is kept as an authoring baseline
+  (e.g. Cable Lateral Raise's `"8"` vs. Biceps Curl's `"7"` signals one is meant to be
+  pushed harder than the other in general) but isn't currently rendered anywhere — it's
+  reference context for anyone extending the program, not dead weight to delete.
 
 ### Why some compounds are 6-8 reps instead of 10-15
 
