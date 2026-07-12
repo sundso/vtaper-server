@@ -31,6 +31,8 @@ Components only ever reference these names — never a raw hex, radius, or font.
 | `--accent-secondary` | `#f3a94e` | Highlight/informational — warm-up cues, "+1 set" badges |
 | `--accent-success` | `#3ecf8e` | Success / "done" (save toast, completed timer) |
 | `--accent-danger` | `#ff5c72` | Destructive / error / deload signal |
+| `--avatar-bg` | `#e8e8ec` | Light circle behind exercise movement icons — the one deliberate light surface against the dark canvas |
+| `--avatar-fg` | `#17171b` | Stroke/fill of the movement icon on `--avatar-bg` |
 
 ### Type
 | Token | Value | Role |
@@ -76,6 +78,21 @@ from one of these — never a raw `px` or numeric weight.
 | `--radius-pill` | `999px` | Buttons, day chips, nav, badges |
 | `--border-w` | `1px` | Reserved for focus rings — most surfaces are borderless, separated by color/elevation instead |
 | `--shadow-card` | `0 10px 30px rgba(0,0,0,0.45)` | Card elevation off the black canvas |
+
+### Exercise movement icons
+
+Every exercise card and library row shows a small round avatar (`.tracker-ex-avatar`,
+`--avatar-bg`/`--avatar-fg`) with a line-art pictogram of the movement. There is no
+photo/illustration library to draw from, so icons are per **movement pattern**
+(`MOVEMENT_ICON_SHAPES` in `index.html` — press-incline, row, curl, squat, hip-hinge,
+etc.), not per exercise name — dozens of named variations share a pattern and so share
+an icon. `getExerciseIcon(name, target)` maps a name/target to one of these; it checks
+name keywords that cut across muscle groups first (a squat is a squat whether it's
+tagged Quads, Glutes, or Adductors), then falls back to a per-target default. Adding a
+new exercise needs no icon work unless it's a genuinely new movement pattern — extend
+`MOVEMENT_ICON_SHAPES` and `getExerciseIcon`'s heuristic in that case, matching the
+existing pictograms' style (24×24 viewBox, `currentColor`-independent stroke via
+`--avatar-fg`, ~5-7 line/circle primitives).
 
 ---
 
