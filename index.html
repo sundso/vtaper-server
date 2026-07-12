@@ -142,6 +142,9 @@ body { margin: 0; background: #000; overflow-x: hidden; }
 .tracker-done-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .tracker-done-btn-undo { background: var(--panel-2); color: var(--text-muted); }
 .tracker-save-btn { position: sticky; bottom: 12px; }
+.tracker-session-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.tracker-session-elapsed { font-family: var(--font-mono); font-size: var(--text-xl); font-weight: var(--weight-bold); color: var(--text); }
+.tracker-session-label { font-size: var(--text-2xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
 .tracker-pump-note { font-size: var(--text-sm); color: var(--text-muted); line-height: 1.5; }
 .tracker-pump-row { display: grid; grid-template-columns: 2fr 1fr 1fr 28px; gap: 6px; align-items: center; }
 .tracker-add-row { background: transparent; border: var(--border-w) dashed var(--panel-3); color: var(--text-muted); padding: 9px; border-radius: var(--radius-ctl); font-size: var(--text-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
@@ -477,6 +480,10 @@ const TYPE_DEFAULTS = {
   isolation: { reps: "10-15", rest: 90, restLabel: "90s" },
 };
 
+// Rough time to unrack/perform/rerack a single set, used only for the estimated-
+// finish-time readout — a coarse planning number, not a promise.
+const SET_EXECUTION_SECONDS = 25;
+
 // Corner radius (CSS px) for the share-card export mask — see renderShareBlob in App.
 const SHARE_CARD_RADIUS = 28;
 
@@ -514,6 +521,15 @@ function getPhaseInfo(week) {
 }
 
 function fmtDate(d) { return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); }
+// mm:ss for under an hour, h:mm:ss past that — used for both the running elapsed
+// clock and the estimated-remaining readout.
+function fmtDuration(totalSeconds) {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
+  return (h > 0 ? `${h}:${mm}` : mm) + ":" + String(sec).padStart(2, "0");
+}
+function fmtClock(d) { return new Date(d).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }); }
 const stripNegative = (v) => v.replace(/-/g, "");
 const loadJSON = (key, fallback) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } };
 const saveJSON = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; } };
@@ -1074,6 +1090,15 @@ function App() {
   // collapse a finished exercise to focus on the next one without saving to
   // history yet; the actual save still happens once, for the whole day, below.
   const [doneExercises, setDoneExercises] = useState(initialDraft.doneExercises || {});
+  // Session stopwatch: timestamp the workout was started, or null when stopped.
+  // Persisted in the draft so a refresh mid-workout doesn't reset the clock.
+  const [workoutStart, setWorkoutStart] = useState(initialDraft.workoutStart || null);
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!workoutStart) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [workoutStart]);
   const [saved, setSaved] = useState(false);
   const [toast, setToast] = useState(null);
   const [expandedLog, setExpandedLog] = useState(null);
@@ -1098,7 +1123,7 @@ function App() {
   useEffect(() => { saveJSON("vtaper_customAltTypes", customAltTypes); }, [customAltTypes]);
 
   // Persist the in-progress entry on every change so it survives a page refresh.
-  useEffect(() => { saveJSON("vtaper_draft", { dayType, values, pumpRows, doneExercises }); }, [dayType, values, pumpRows, doneExercises]);
+  useEffect(() => { saveJSON("vtaper_draft", { dayType, values, pumpRows, doneExercises, workoutStart }); }, [dayType, values, pumpRows, doneExercises, workoutStart]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
 
@@ -1177,6 +1202,28 @@ function App() {
   }, [week, startDate]);
 
   const phase = getPhaseInfo(week);
+
+  // Estimated seconds left in today's session: for every not-yet-done exercise,
+  // (remaining sets) x (execution time + that exercise's rest). Sets already typed
+  // in (weight or reps present) don't count as remaining, so the estimate tightens
+  // up as you actually log the workout instead of just counting down from the start.
+  const remainingWorkoutSeconds = useMemo(() => {
+    if (!PROGRAM[dayType]) return null;
+    let total = 0;
+    PROGRAM[dayType].forEach((ex) => {
+      const variantId = altSelection[ex.id] || ex.id;
+      if (doneExercises[variantId]) return;
+      const isCustom = variantId === customVariantId(ex.id);
+      const customType = customAltTypes[ex.id];
+      const effective = (isCustom && customType && TYPE_DEFAULTS[customType]) ? TYPE_DEFAULTS[customType] : ex;
+      const extraSet = phase.name === "Volume Phase" && ex.priority;
+      const totalSets = extraSet ? ex.sets + 1 : ex.sets;
+      const filled = (values[variantId] || []).filter((s) => s && (s.weight || s.reps)).length;
+      const remainingSets = Math.max(0, totalSets - filled);
+      total += remainingSets * (SET_EXECUTION_SECONDS + effective.rest);
+    });
+    return total;
+  }, [dayType, altSelection, doneExercises, customAltTypes, values, phase]);
 
   // After each new session is logged, auto-advance to the next day in the rotation.
   // But on the first load after a refresh, don't yank the user off a draft they were
@@ -1594,6 +1641,34 @@ function App() {
 
       {tab === "today" && (
         <div className="tracker-body">
+          <div className="tracker-card">
+            <div className="tracker-card-body tracker-card-body-standalone">
+              {workoutStart ? (
+                <>
+                  <div className="tracker-session-row">
+                    <div>
+                      <div className="tracker-session-elapsed">{fmtDuration((now - workoutStart) / 1000)}</div>
+                      <div className="tracker-session-label">elapsed</div>
+                    </div>
+                    {remainingWorkoutSeconds != null && (
+                      <div style={{ textAlign: "right" }}>
+                        <div className="tracker-session-elapsed">{fmtClock(now + remainingWorkoutSeconds * 1000)}</div>
+                        <div className="tracker-session-label">est. finish · {fmtDuration(remainingWorkoutSeconds)} left</div>
+                      </div>
+                    )}
+                  </div>
+                  <button className="tracker-done-btn tracker-done-btn-undo" onClick={() => setWorkoutStart(null)}>
+                    <E size={13}>⏹</E> Stop Workout
+                  </button>
+                </>
+              ) : (
+                <button className="tracker-primary-btn" style={{ margin: 0 }} onClick={() => setWorkoutStart(Date.now())}>
+                  <E size={14}>▶</E> Start Workout
+                </button>
+              )}
+            </div>
+          </div>
+
           {dayType === "Pump/Recovery" ? (
             <div className="tracker-card">
               <div className="tracker-card-body tracker-card-body-standalone">
