@@ -81,7 +81,7 @@ from one of these — never a raw `px` or numeric weight.
 ### Shape
 | Token | Value | Role |
 |---|---|---|
-| `--radius-card` | `24px` | Cards, phase banner, confirm panels |
+| `--radius-card` | `24px` | Cards, phase note, confirm panels |
 | `--radius-ctl` | `14px` | Inputs, selects, small controls |
 | `--radius-pill` | `999px` | Buttons, day chips, nav, badges |
 | `--border-w` | `1px` | Reserved for focus rings — most surfaces are borderless, separated by color/elevation instead |
@@ -130,9 +130,9 @@ existing pictograms' style (24×24 viewBox, `currentColor`-independent stroke vi
 - **Theme overrides only touch canvas/surface/ink** (`--bg`, `--panel*`, `--text*`,
   `--shadow-card`) in the `html[data-theme="light"] .tracker-root` block — never fork
   `--accent-*` or `--avatar-*` per theme, and never add a per-theme override outside that one
-  block (or `html[data-theme="light"] body` for the backdrop). Any hardcoded `rgba(255,255,255,…)`
-  / `rgba(0,0,0,…)` on top of an accent-colored surface (e.g. phase banner text, modal backdrop)
-  is intentional and theme-independent — it sits on a fixed accent color, not the canvas.
+  block (or `html[data-theme="light"] body` for the backdrop). Any hardcoded `rgba(0,0,0,…)`
+  on top of a fixed-dark surface (e.g. modal backdrop) is intentional and theme-independent —
+  it doesn't sit on the canvas.
 
 ## Extending the palette
 

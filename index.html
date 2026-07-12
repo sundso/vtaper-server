@@ -92,12 +92,9 @@ html[data-theme="light"] .tracker-root {
 .tracker-weekcal-day.is-today .tracker-weekcal-dow, .tracker-weekcal-day.is-today .tracker-weekcal-num { color: #fff; }
 .tracker-weekcal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-success); }
 .tracker-weekcal-day.is-today .tracker-weekcal-dot { background: #fff; }
-.tracker-phase-banner { background: linear-gradient(135deg, var(--accent-primary), #6f61e8); border-radius: var(--radius-card); padding: var(--space-page); margin-bottom: 14px; box-shadow: var(--shadow-card); }
-.tracker-phase-name { font-family: var(--font-display); font-weight: var(--weight-black); font-size: var(--text-xl); color: #fff; }
-.tracker-phase-desc { font-size: var(--text-sm); color: rgba(255,255,255,0.85); margin-top: 4px; line-height: 1.4; }
-.tracker-phase-rpe { font-family: var(--font-mono); font-size: var(--text-xs); color: rgba(255,255,255,0.75); margin-top: 8px; }
-.tracker-phase-note { font-size: var(--text-sm); color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
-.tracker-phase-note-rpe { font-family: var(--font-mono); }
+.tracker-phase-note { background: rgba(243,169,78,0.12); border-radius: var(--radius-card); padding: var(--space-card) var(--space-page); margin-bottom: 14px; font-size: var(--text-sm); color: var(--text); line-height: 1.5; }
+.tracker-phase-note-name { font-weight: var(--weight-bold); }
+.tracker-phase-note-rpe { font-family: var(--font-mono); color: var(--text-muted); }
 .tracker-tabs { display: flex; gap: 4px; background: var(--panel-2); border-radius: var(--radius-pill); padding: 4px; }
 .tracker-tab { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 9px 0; font-size: var(--text-md); font-weight: var(--weight-semibold); cursor: pointer; border-radius: var(--radius-pill); font-family: var(--font-body); }
 .tracker-tab.active { color: #fff; background: var(--accent-primary); }
@@ -1281,7 +1278,14 @@ function App() {
     }
   }, [week, startDate]);
 
-  const phase = getPhaseInfo(week);
+  // Drives everything on screen — banner/note, exercise-card RPE, the Volume Phase
+  // extra-set, and the progression note — off whichever week the calendar strip is
+  // browsing, not just the real one, so browsing to a week always shows *that* week's
+  // targets consistently (see GYM_KNOWLEDGE.md's phase table). Saving a workout still
+  // tags it with the real current week/phase below — what you log is never backdated
+  // or future-dated by what you happen to be browsing.
+  const phase = getPhaseInfo(viewWeek);
+  const realPhase = getPhaseInfo(week);
 
   // Estimated seconds left in today's session: for every not-yet-done exercise,
   // (remaining sets) x (execution time + that exercise's rest). Sets already typed
@@ -1410,7 +1414,7 @@ function App() {
     try {
       const row = await apiFetch("/api/logs", token, {
         method: "POST",
-        body: JSON.stringify({ date: new Date().toISOString(), dayType, week, phase: phase.name, exercises: exercisesLogged }),
+        body: JSON.stringify({ date: new Date().toISOString(), dayType, week, phase: realPhase.name, exercises: exercisesLogged }),
       });
       setLogs((prev) => [...prev, normalizeLog(row)]);
       setValues({});
@@ -1429,7 +1433,7 @@ function App() {
     try {
       const row = await apiFetch("/api/logs", token, {
         method: "POST",
-        body: JSON.stringify({ date: new Date().toISOString(), dayType: "Pump/Recovery", week, phase: phase.name, pump: cleaned }),
+        body: JSON.stringify({ date: new Date().toISOString(), dayType: "Pump/Recovery", week, phase: realPhase.name, pump: cleaned }),
       });
       setLogs((prev) => [...prev, normalizeLog(row)]);
       setPumpRows([{ name: "", sets: "", reps: "" }]);
@@ -1717,17 +1721,10 @@ function App() {
       <div className="tracker-scroll-top">
         <WeekCalendar startDate={startDate} logs={logs} viewWeek={viewWeek} onChangeWeek={(w) => setViewWeek(Math.max(1, w))} />
 
-        {phase.name === "Foundation" || phase.deload ? (
-          <div className="tracker-phase-note">
-            {phase.desc} <span className="tracker-phase-note-rpe">Target RPE {phase.rpe}</span>
-          </div>
-        ) : (
-          <div className="tracker-phase-banner">
-            <div className="tracker-phase-name">{phase.name}</div>
-            <div className="tracker-phase-desc">{phase.desc}</div>
-            <div className="tracker-phase-rpe">Target RPE {phase.rpe}</div>
-          </div>
-        )}
+        <div className="tracker-phase-note">
+          <span className="tracker-phase-note-name">{phase.name}</span> — {phase.desc}{" "}
+          <span className="tracker-phase-note-rpe">Target RPE {phase.rpe}</span>
+        </div>
       </div>
 
       {tab === "today" && (

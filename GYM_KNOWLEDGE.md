@@ -55,13 +55,23 @@ by then the base is already built.
 | 25+ | Repeat Cycle | 7-8 | Back to Progressive-Overload intensity. Good point to rotate out an exercise that's gone stale (diminishing returns, boredom, an injury niggle). |
 
 `index.html` also tracks `viewWeek` — whatever week the calendar strip's ‹ › chevrons are
-currently browsing, starts synced to the real `week` and then moves independently. `viewWeek`
-only feeds the calendar strip itself (which 7 days/dots it shows, its "Week X of 24" caption).
-`phase = getPhaseInfo(week)` — the *real* current week — is the single source for everything
-else: the phase banner/note, exercise-card RPE (`getDisplayRpe`), the Volume Phase extra-set,
-the progression note, and what gets tagged on a saved log. Browsing the calendar to a
-different week never changes any of those — they'd otherwise disagree with the banner right
-above them, which reads as a bug rather than a "preview."
+currently browsing, starts synced to the real `week` and then moves independently.
+`phase = getPhaseInfo(viewWeek)` drives *everything visible*: the phase note under the
+calendar strip, exercise-card RPE (`getDisplayRpe`), the Volume Phase extra-set, the
+progression note, and the session-timer estimate — so browsing to any week shows that
+week's targets exactly per the table above, consistently across the note and every exercise
+card. There's no "preview vs. real" split in what's on screen; whichever week you're looking
+at is what governs the numbers you see. The phase note itself is a single small highlighted
+line (`.tracker-phase-note`) for every phase — name, description, target RPE — there's no
+separate big "banner" treatment for some phases and not others; that distinction existed
+briefly and was dropped because reserving a louder style for some phases implied the small
+note was less trustworthy/complete, which isn't true.
+
+The one place that stays anchored to the real week is **what a save actually writes**:
+`realPhase = getPhaseInfo(week)` (the real current week, independent of `viewWeek`) is used
+only in the two `POST /api/logs` bodies, so a logged workout is always tagged with the real
+phase/week it happened in — browsing to a different week to check its targets can never
+mis-tag a saved session.
 
 ## Set / rep / RPE / rest conventions
 
@@ -123,7 +133,7 @@ a one-line call under "Last time" on the exercise card:
 This is the double-progression scheme already described in the phase table above
 ("reps first, then weight once you're at the top of the rep range") turned into a concrete
 per-exercise call instead of a general phase-level reminder. **Deload** suppresses the note
-entirely (planned recovery, not a progression week — the deload banner already says so).
+entirely (planned recovery, not a progression week — the phase note already says so).
 **Foundation** only suppresses the "add weight" call, since that's the one piece of advice
 that actually conflicts with "don't chase weight yet" — "hold/lower the weight" and "same
 weight, more reps" still surface there, since both are exactly the reps-based feedback a
