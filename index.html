@@ -85,6 +85,8 @@ body { margin: 0; background: #000; overflow-x: hidden; }
 .tracker-phase-name { font-family: var(--font-display); font-weight: var(--weight-black); font-size: var(--text-xl); color: #fff; }
 .tracker-phase-desc { font-size: var(--text-sm); color: rgba(255,255,255,0.85); margin-top: 4px; line-height: 1.4; }
 .tracker-phase-rpe { font-family: var(--font-mono); font-size: var(--text-xs); color: rgba(255,255,255,0.75); margin-top: 8px; }
+.tracker-phase-note { font-size: var(--text-sm); color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
+.tracker-phase-note-rpe { font-family: var(--font-mono); }
 .tracker-tabs { display: flex; gap: 4px; background: var(--panel-2); border-radius: var(--radius-pill); padding: 4px; }
 .tracker-tab { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 9px 0; font-size: var(--text-md); font-weight: var(--weight-semibold); cursor: pointer; border-radius: var(--radius-pill); font-family: var(--font-body); }
 .tracker-tab.active { color: #fff; background: var(--accent-primary); }
@@ -1637,11 +1639,17 @@ function App() {
       <div className="tracker-scroll-top">
         <WeekCalendar startDate={startDate} logs={logs} viewWeek={viewWeek} onChangeWeek={(w) => setViewWeek(Math.max(1, w))} />
 
-        <div className={`tracker-phase-banner ${phase.deload ? "is-deload" : ""}`}>
-          <div className="tracker-phase-name">{phase.name}</div>
-          <div className="tracker-phase-desc">{phase.desc}</div>
-          <div className="tracker-phase-rpe">Target RPE {phase.rpe}</div>
-        </div>
+        {phase.name === "Foundation" ? (
+          <div className="tracker-phase-note">
+            {phase.desc} <span className="tracker-phase-note-rpe">Target RPE {phase.rpe}</span>
+          </div>
+        ) : (
+          <div className={`tracker-phase-banner ${phase.deload ? "is-deload" : ""}`}>
+            <div className="tracker-phase-name">{phase.name}</div>
+            <div className="tracker-phase-desc">{phase.desc}</div>
+            <div className="tracker-phase-rpe">Target RPE {phase.rpe}</div>
+          </div>
+        )}
       </div>
 
       {tab === "today" && (
