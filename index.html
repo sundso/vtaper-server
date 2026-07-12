@@ -103,9 +103,10 @@ html[data-theme="light"] .tracker-root {
 .tracker-tab.active { color: #fff; background: var(--accent-primary); }
 .tracker-body { padding: var(--space-page); display: flex; flex-direction: column; gap: 10px; padding-bottom: 140px; }
 .tracker-select-wrap { position: relative; flex: 1; }
-.tracker-select-wrap::after { content: "▾"; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: var(--text-lg); line-height: 1; pointer-events: none; }
 .tracker-day-select-wrap { position: relative; margin: 14px 0; }
-.tracker-day-select-wrap::after { content: "▾"; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: var(--text-lg); line-height: 1; pointer-events: none; }
+.tracker-select-wrap::after, .tracker-day-select-wrap::after { content: "▾"; position: absolute; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: var(--text-lg); line-height: 1; pointer-events: none; }
+.tracker-select-wrap::after { right: 10px; }
+.tracker-day-select-wrap::after { right: 14px; }
 .tracker-day-select { width: 100%; appearance: none; -webkit-appearance: none; background: var(--panel-2); border: var(--border-w) solid transparent; color: var(--text); padding: var(--space-card) 32px var(--space-card) var(--space-page); border-radius: var(--radius-ctl); font-size: var(--text-base); font-weight: var(--weight-bold); font-family: var(--font-body); }
 .tracker-day-select:focus { border-color: var(--accent-primary); outline: none; }
 .tracker-card { background: var(--panel); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-card); }
@@ -1281,12 +1282,6 @@ function App() {
   }, [week, startDate]);
 
   const phase = getPhaseInfo(week);
-  // The phase note/banner sits directly under the week calendar and reads as a
-  // description of whichever week you're currently browsing there — so it tracks
-  // viewWeek, not the real program week. Everything that actually governs today's
-  // targets (exercise cards' RPE/extra-set/progression note, and what gets logged)
-  // stays on the real `phase` above; only this display follows the chevrons.
-  const viewPhase = getPhaseInfo(viewWeek);
 
   // Estimated seconds left in today's session: for every not-yet-done exercise,
   // (remaining sets) x (execution time + that exercise's rest). Sets already typed
@@ -1722,15 +1717,15 @@ function App() {
       <div className="tracker-scroll-top">
         <WeekCalendar startDate={startDate} logs={logs} viewWeek={viewWeek} onChangeWeek={(w) => setViewWeek(Math.max(1, w))} />
 
-        {viewPhase.name === "Foundation" || viewPhase.deload ? (
+        {phase.name === "Foundation" || phase.deload ? (
           <div className="tracker-phase-note">
-            {viewPhase.desc} <span className="tracker-phase-note-rpe">Target RPE {viewPhase.rpe}</span>
+            {phase.desc} <span className="tracker-phase-note-rpe">Target RPE {phase.rpe}</span>
           </div>
         ) : (
           <div className="tracker-phase-banner">
-            <div className="tracker-phase-name">{viewPhase.name}</div>
-            <div className="tracker-phase-desc">{viewPhase.desc}</div>
-            <div className="tracker-phase-rpe">Target RPE {viewPhase.rpe}</div>
+            <div className="tracker-phase-name">{phase.name}</div>
+            <div className="tracker-phase-desc">{phase.desc}</div>
+            <div className="tracker-phase-rpe">Target RPE {phase.rpe}</div>
           </div>
         )}
       </div>
